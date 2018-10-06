@@ -12,7 +12,7 @@ import android.widget.TextView;
 import com.bearded.derek.ankicar.dummy.DummyContent;
 
 /**
- * A fragment representing a single Card detail screen.
+ * A fragment representing a single AnkiCard detail screen.
  * This fragment is either contained in a {@link CardListActivity}
  * in two-pane mode (on tablets) or a {@link CardDetailActivity}
  * on handsets.
