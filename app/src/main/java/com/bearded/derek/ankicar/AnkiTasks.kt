@@ -122,7 +122,7 @@ OnCompletionListener) :
         notedIds.forEach {
             noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, it.toString())
             cardsUri = Uri.withAppendedPath(noteUri, "cards")
-            specifiCardUri = Uri.withAppendedPath(cardsUri, "1")
+            specifiCardUri = Uri.withAppendedPath(cardsUri, "0")
             cr.query(specifiCardUri,
                     projection,
                     null,
