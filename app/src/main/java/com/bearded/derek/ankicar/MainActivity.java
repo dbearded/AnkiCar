@@ -9,11 +9,14 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MotionEvent;
 
+import com.bearded.derek.ankicar.view.ReviewGestureListener;
 import com.ichi2.anki.FlashCardsContract;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +31,16 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity {
+import kotlin.Pair;
+
+public class MainActivity extends AppCompatActivity implements ReviewGestureListener.ReviewGestureCallback {
 
     private static final int REQUEST_PERMISSION_FLASHCARD = 2000;
 
     private boolean TTS_INIT_COMPLETE;
     private boolean CARDS_COMPLETE;
+    private GestureDetectorCompat gestureDetector;
+    private ReviewGestureListener gestureListener = new ReviewGestureListener(this);
 
     List<ReviewInfo> reviewInfo = new ArrayList<>();
     TextToSpeech textToSpeech;
@@ -79,6 +86,9 @@ public class MainActivity extends AppCompatActivity {
                                 new QueryAnkiModels.OnCompletionListener() {
                                     @Override
                                     public void onComplete(@NotNull List<AnkiCard> reviewInfo) {
+                                        if (reviewInfo.isEmpty()) {
+                                            return;
+                                        }
                                         Long mid = reviewInfo.get(0).getModelId();
                                         Log.v("Models", mid.toString());
                                         for (AnkiCard ankiCard :
@@ -118,21 +128,39 @@ public class MainActivity extends AppCompatActivity {
 
 //        specificCards.execute(getContentResolver());
         if (!shouldRequestPermission(FlashCardsContract.READ_WRITE_PERMISSION)) {
-            queryAnkiSchedule.execute(getContentResolver());
+//            queryAnkiSchedule.execute(getContentResolver());
         }
 
-//        textToSpeech = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
-//            @Override
-//            public void onInit(int status) {
-//                if (status == TextToSpeech.SUCCESS) {
-//                    textToSpeech.setLanguage(Locale.US);
-//                    TTS_INIT_COMPLETE = true;
+        textToSpeech = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    textToSpeech.setLanguage(Locale.US);
+                    TTS_INIT_COMPLETE = true;
 //                    speakCards();
-//                }
-//            }
-//        });
+                }
+            }
+        });
+
+        gestureDetector = new GestureDetectorCompat(this, gestureListener);
 
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (this.gestureDetector.onTouchEvent(event)) {
+            return true;
+        }
+        return super.onTouchEvent(event);
+    }
+
+    //    @Override
+//    public boolean onTouchEvent(MotionEvent event){
+//        if (this.mDetector.onTouchEvent(event)) {
+//            return true;
+//        }
+//        return super.onTouchEvent(event);
+//    }
 
     private void speakCards() {
 //        textToSpeech.speak(card.getQuestion(), TextToSpeech.QUEUE_FLUSH, null, "question");
@@ -299,6 +327,33 @@ public class MainActivity extends AppCompatActivity {
             textToSpeech.shutdown();
         }
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onFling(@NotNull Pair<String, Double> direction) {
+        if (textToSpeech != null && TTS_INIT_COMPLETE) {
+            textToSpeech.speak("Flinging " + direction.getFirst(), TextToSpeech.QUEUE_ADD, null,
+                "fling:"+direction.getSecond().toString());
+        }
+        return true;
+    }
+
+    @Override
+    public void onLongPress() {
+        if (textToSpeech != null && TTS_INIT_COMPLETE) {
+            textToSpeech.speak("Long press", TextToSpeech.QUEUE_ADD, null,
+                "long press");
+        }
+    }
+
+    @Override
+    public boolean onDoubleTap() {
+        if (textToSpeech != null && TTS_INIT_COMPLETE) {
+            textToSpeech.speak("Double tapping", TextToSpeech.QUEUE_ADD, null,
+                "double tap");
+        }
+
+        return true;
     }
 
     static class QueryAnkiScheduleA extends AsyncTask<ContentResolver, Void, List<ReviewInfo>> {
