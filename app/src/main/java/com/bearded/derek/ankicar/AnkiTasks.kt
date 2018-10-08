@@ -6,32 +6,74 @@ import android.os.AsyncTask
 import android.text.TextUtils
 import com.ichi2.anki.FlashCardsContract
 import java.lang.ref.WeakReference
+import com.bearded.derek.ankicar.AnkiReviewCard.*
+import com.bearded.derek.ankicar.Card.Companion.build
 
-class QueryAnkiSchedule(onCompletionListener: OnCompletionListener) : AsyncTask<ContentResolver, Void,
-        List<ReviewInfo>>() {
+interface CardCompletionListener {
+    fun onQueryComplete(cards: List<Card>)
+    fun onUpdateComplete()
+}
+
+fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver, callback: CardCompletionListener) {
+    val querySchedule =  QueryAnkiSchedule(deckId, limit, object : QueryAnkiSchedule.OnCompletionListener{
+        override fun onComplete(reviewInfo: List<AnkiCardForReview>) {
+            val notedIds = mutableListOf<Long>()
+            reviewInfo.forEach {
+                notedIds += it.noteId
+            }
+
+            val querySpecificCards = QueryAnkiSpecificSimpleCards(notedIds, object : QueryAnkiSpecificSimpleCards
+            .OnCompletionListener {
+                override fun onComplete(reviewInfo: List<AnkiCard>) {
+                    val queryAnkyModels = QueryAnkiModels(reviewInfo, object : QueryAnkiModels.OnCompletionListener {
+                        override fun onComplete(reviewInfo: List<AnkiCard>) {
+                            if (reviewInfo.isEmpty()) {
+                                return
+                            }
+
+                            val cards = mutableListOf<Card>()
+                            reviewInfo.forEach {
+                                cards += it.build(it.getCleanser())
+                            }
+
+                            callback.onQueryComplete(cards)
+                        }
+                    })
+                    queryAnkyModels.execute(contentResolver)
+                }
+            })
+            querySpecificCards.execute(contentResolver)
+        }
+    })
+    querySchedule.execute(contentResolver)
+}
+
+class QueryAnkiSchedule(val deckId: Long, val limit: Int, onCompletionListener: OnCompletionListener) :
+        AsyncTask<ContentResolver, Void,
+        List<AnkiCardForReview>>() {
 
     interface OnCompletionListener {
-        fun onComplete(reviewInfo: List<ReviewInfo>)
+        fun onComplete(reviewInfo: List<AnkiCardForReview>)
     }
 
     private val EMPTY_MEDA: String = "[]"
     private val weakReferenceListener: WeakReference<OnCompletionListener> = WeakReference(onCompletionListener)
 
-    override fun doInBackground(vararg params: ContentResolver?): List<ReviewInfo> {
+    override fun doInBackground(vararg params: ContentResolver?): List<AnkiCardForReview> {
         val cr: ContentResolver = params[0] ?: return emptyList()
 
-        val reviewInfos = mutableListOf<ReviewInfo>()
+        val reviewInfos = mutableListOf<AnkiCardForReview>()
 
         val scheduledCardsUri: Uri = FlashCardsContract.ReviewInfo.CONTENT_URI
 
-        val deckSelector = "limit=?"
-        val deckArguments = arrayOf("100")
+        val deckSelector = "limit=?, deckID=?"
+        val deckArguments = arrayOf(limit.toString(), deckId.toString())
 
         cr.query(scheduledCardsUri, null, deckSelector, deckArguments,null).use {
             while (it.moveToNext()) {
                 if (TextUtils.equals(it.getString(4), EMPTY_MEDA)) {
-                    reviewInfos += ReviewInfo(it.getLong(0),
-                            it.getLong(1),
+                    reviewInfos += AnkiCardForReview(it.getLong(0),
+                            it.getInt(1),
                             it.getLong(2),
                             it.getString(3))
                 }
@@ -41,21 +83,21 @@ class QueryAnkiSchedule(onCompletionListener: OnCompletionListener) : AsyncTask<
         return reviewInfos
     }
 
-    override fun onPostExecute(result: List<ReviewInfo>?) {
+    override fun onPostExecute(result: List<AnkiCardForReview>?) {
         weakReferenceListener.get()?.onComplete(result ?: emptyList())
     }
 }
 
-class QueryAnkiSimpleCards(private val reviewInfo: List<ReviewInfo>, onCompletionListener: OnCompletionListener) :
-        AsyncTask<ContentResolver, Void, List<ReviewInfo>>() {
+class QueryAnkiSimpleCards(private val reviewInfo: List<AnkiCardForReview>, onCompletionListener: OnCompletionListener) :
+        AsyncTask<ContentResolver, Void, List<AnkiCardForReview>>() {
 
     interface OnCompletionListener {
-        fun onComplete(reviewInfo: List<ReviewInfo>)
+        fun onComplete(reviewInfo: List<AnkiCardForReview>)
     }
 
     private val weakReferenceListener: WeakReference<OnCompletionListener> = WeakReference(onCompletionListener)
 
-    override fun doInBackground(vararg params: ContentResolver?): List<ReviewInfo> {
+    override fun doInBackground(vararg params: ContentResolver?): List<AnkiCardForReview> {
         val cr: ContentResolver = params[0] ?: return emptyList()
 
         var noteUri: Uri
@@ -92,7 +134,7 @@ class QueryAnkiSimpleCards(private val reviewInfo: List<ReviewInfo>, onCompletio
         return emptyList()
     }
 
-    override fun onPostExecute(result: List<ReviewInfo>?) {
+    override fun onPostExecute(result: List<AnkiCardForReview>?) {
         weakReferenceListener.get()?.onComplete(result ?: emptyList())
     }
 }
@@ -130,7 +172,7 @@ OnCompletionListener) :
                     null).use {
                 if (!it.moveToFirst()) return@use
                 val noteId = it.getLong(0)
-                val cardOrd = it.getLong(1)
+                val cardOrd = it.getInt(1)
                 val cardName = it.getString(2)
                 val did = it.getString(3)
                 val question = it.getString(4)

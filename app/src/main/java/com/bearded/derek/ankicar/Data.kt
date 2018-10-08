@@ -1,16 +1,20 @@
 package com.bearded.derek.ankicar
 
+import android.util.EventLogTags
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.util.regex.Pattern
 
-class ReviewInfo(val noteId: Long, val cardOrd: Long, val buttonCount: Long, val nextReviewTimes: String)
+sealed class AnkiReviewCard {
+    class AnkiCardForReview(val noteId: Long, val cardOrd: Int, val buttonCount: Long, val nextReviewTimes: String)
+    class AnkiCardReviewed(val noteId: Long, val cardOrd: Int, val ease: String, val timeTaken: String)
+}
 
 data class AnkiCard(val noteId: Long,
                     var modelId: Long,
-                    val cardOrd: Long,
+                    val cardOrd: Int,
                     val cardName: String,
                     val did: String,
                     val question: String,
@@ -18,7 +22,6 @@ data class AnkiCard(val noteId: Long,
                     val questionSimple: String,
                     val answerSimple: String,
                     val answerPure: String)
-
 
 object Deck {
     const val ID_DEVELOPER = 1L
@@ -126,8 +129,8 @@ object ProblemCleanser : ModelCleanser {
 
 }
 
-class Card private constructor(val noteId: Long,
-           val cardOrd: Long,
+data class Card private constructor(val noteId: Long,
+           val cardOrd: Int,
            val question: String,
            val answer: String) {
     companion object {
