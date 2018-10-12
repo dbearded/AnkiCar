@@ -60,8 +60,8 @@ public class MainActivity extends AppCompatActivity implements ReviewGestureList
                     textToSpeech.setLanguage(Locale.US);
                     isTtsInitComplete = true;
                     if (!shouldRequestPermission(FlashCardsContract.READ_WRITE_PERMISSION)) {
-                        reviewAdapter.init(1523336138544L);
-                    }
+                        reviewAdapter.init(null);
+                      }
                 }
             }
         });

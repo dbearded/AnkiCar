@@ -1,10 +1,9 @@
 package com.bearded.derek.ankicar.data
 
 import android.content.ContentResolver
-import com.bearded.derek.ankicar.AnkiReviewCard
-import com.bearded.derek.ankicar.Card
-import com.bearded.derek.ankicar.CardCompletionListener
-import com.bearded.derek.ankicar.queryReviewCards
+import android.text.TextUtils
+import android.view.TextureView
+import com.bearded.derek.ankicar.*
 
 class ReviewAdapter(private val callback: Callback, private val contentResolver: ContentResolver) {
 
@@ -19,64 +18,78 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
             field = value
         }
 
-    companion object {
-
-        const val CACHE_SIZE = 3
-    }
-
     private val ankiTaskCompletionListener = object : CardCompletionListener {
         override fun onQueryComplete(cards: List<Card>) {
+            requestInFlight = false
             reviewQueue = cards
-
-            next()
+            val prevLimit = postReviewCache.size + skipList.size + unhandledCards.size +  1
+            cards.filterTo(unhandledCards) {
+                TextUtils.equals(it.question, UNHANDLED)
+            }
+            val querySize = reviewQueue.size
+            // Only unhandled cards and only if the query keeps returning new cards
+            if (unhandledCards.size == reviewQueue.size && prevLimit == querySize) {
+                queryForCards()
+            } else {
+                next()
+            }
         }
 
-        override fun onUpdateComplete() {
+        override fun onUpdateComplete(numUpdated: Int) {
+            requestInFlight = false
             queryForCards()
         }
     }
 
-    private var isInitialized = false
-    private var skipsInCache = 0
+    private fun manageUnhandledCards(cards: List<Card>) {
+
+    }
+
+    var cacheLimit = 3
+    private  var requestInFlight = false
+    private var readyForInput = true
     private lateinit var currentCard: Card
     private var cardStartTime = -1L
     private val postReviewCache = mutableListOf<ReviewAction>()
     private val skipList = mutableListOf<Card>()
+    private val unhandledCards = mutableSetOf<Card>()
 
     private lateinit var reviewQueue: List<Card>
 
-    fun init(deckId: Long) {
-        this.deckId = deckId
-        queryForCards()
+    fun init(deckId: Long?) {
+        if (readyForInput) {
+            readyForInput = false
+            this.deckId = deckId ?: -1L
+            queryForCards()
+        }
     }
 
     fun answer(ease: Int) {
-        if (isInitialized) {
+        if (readyForInput) {
+            readyForInput = false
             val timeTaken = Math.min(System.currentTimeMillis() - cardStartTime, 60*1000L)
             addToCache(ReviewAction.ReviewResult(currentCard, ease, timeTaken))
-//            next()
             queryForCards()
         }
     }
 
     fun skip() {
-        if (isInitialized) {
+        if (readyForInput) {
+            readyForInput = false
             addToCache(ReviewAction.SkipResult(currentCard))
-//            next()
             queryForCards()
         }
     }
 
     fun previous() {
-        if (isInitialized) {
-            if (postReviewCache.isNotEmpty()) {
-                sendNext(getPreviousFromCache().getCard())
-            }
+        if (postReviewCache.isNotEmpty()) {
+            currentCard = postReviewCache.removeAt(postReviewCache.size - 1).getCard()
+            sendNext(currentCard)
         }
     }
 
     fun flag() {
-        if (isInitialized) {
+        if (readyForInput) {
 
         }
     }
@@ -87,50 +100,76 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
 
     private fun addToCache(reviewAction: ReviewAction) {
         postReviewCache += reviewAction
-        if (reviewAction is ReviewAction.SkipResult) {
-            skipsInCache++
-        }
+        handleOverflow()
     }
 
-    private fun getPreviousFromCache(): ReviewAction {
-        val prev = postReviewCache.removeAt(postReviewCache.size - 1)
-        if (prev is ReviewAction.SkipResult) {
-            skipsInCache--
+    private fun handleOverflow() {
+        if (postReviewCache.size > cacheLimit) {
+            val last = postReviewCache.removeAt(0)
+            when (last) {
+                is ReviewAction.SkipResult -> skipList += last.card
+                is ReviewAction.ReviewResult -> sendReviewToAnki(last)
+            }
         }
-        return prev
-    }
-
-    private fun stashSkip(reviewSkip: ReviewAction.SkipResult) {
-        skipsInCache--
-        skipList += reviewSkip.card
     }
 
     private fun sendReviewToAnki(review: ReviewAction.ReviewResult) {
+        requestInFlight = true
         val reviewedCard = AnkiReviewCard.AnkiCardReviewed(review.card.noteId, review.card.cardOrd,
-                review.ease.toString(), review.timeTaken.toString())
+                mapToAnkiEase(review), System.currentTimeMillis() - review.timeTaken)
 
+        updateAnki(reviewedCard, contentResolver, ankiTaskCompletionListener)
         // TODO send update to Anki
-        ankiTaskCompletionListener.onUpdateComplete()
+//        ankiTaskCompletionListener.onUpdateComplete()
+    }
+
+    private fun mapToAnkiEase(review: ReviewAction.ReviewResult): Int {
+        if (review.card.buttonCount == 3) {
+            if (review.ease > 1) {
+                return review.ease - 1
+            }
+        }
+
+        return review.ease
     }
 
     private fun queryForCards() {
-        val limit = postReviewCache.size + skipList.size + 1
-        queryReviewCards(deckId, 100, contentResolver, ankiTaskCompletionListener)
+        if (!requestInFlight) {
+            requestInFlight = true
+            val limit = postReviewCache.size + skipList.size + unhandledCards.size +  1
+            queryReviewCards(deckId, limit, contentResolver, ankiTaskCompletionListener)
+        }
     }
 
-//    private fun getCurrentCard(): Card {
-//        // TODO Is this the right list?
-//        val card = postReviewCache[0]
-//        return when(card) {
-//            is ReviewAction.ReviewResult -> card.card
-//            is ReviewAction.SkipResult -> card.card
-//        }
-//    }
+    private fun next() {
+        val distinct = reviewQueue.minus(getCacheCards()).minus(skipList).minus(unhandledCards)
+        if (distinct.isNotEmpty()) {
+            currentCard = distinct.first()
+            sendNext(currentCard)
+        } else {
+            if (postReviewCache.isEmpty()) {
+                reviewComplete()
+            } else {
+                cacheLimit--
+                handleOverflow()
+                if (!requestInFlight) {
+                    next()
+                }
+            }
+        }
+    }
 
     private fun sendNext(card: Card) {
-        isInitialized = true
         cardStartTime = System.currentTimeMillis();
+        readyForInput = true
         callback.nextCard(card)
+    }
+
+    private fun reviewComplete() {
+        readyForInput = false
+        postReviewCache.clear()
+        reviewQueue = emptyList()
+        callback.reviewComplete()
     }
 
     private fun getCacheCards(): List<Card> {
@@ -138,53 +177,6 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
             when(it) {
                 is ReviewAction.ReviewResult -> it.card
                 is ReviewAction.SkipResult -> it.card
-            }
-        }
-    }
-
-    private fun next() {
-        if (reviewQueue.isEmpty()) {
-            callback.reviewComplete()
-        }
-
-        if (postReviewCache.size > CACHE_SIZE) {
-            val reviewAction = postReviewCache.removeAt(0)
-            when (reviewAction) {
-                is ReviewAction.SkipResult -> stashSkip(reviewAction)
-                is ReviewAction.ReviewResult -> {
-                    sendReviewToAnki(reviewAction)
-                    return
-                }
-            }
-        }
-        val cacheCards = getCacheCards()
-        val distinct = reviewQueue.minus(getCacheCards()).minus(skipList)
-        if (distinct.isNotEmpty()) {
-            currentCard = distinct.first()
-            sendNext(currentCard)
-        } else {
-            if (skipsInCache + skipList.size == reviewQueue.size) {
-                callback.reviewComplete()
-            } else {
-                var shouldUpdate = false
-                var last: ReviewAction
-                while (postReviewCache.isNotEmpty()) {
-                    last = postReviewCache[0]
-                    when (last) {
-                        is ReviewAction.SkipResult -> {
-                            stashSkip(last)
-                            postReviewCache.remove(last)
-                        }
-                        is ReviewAction.ReviewResult -> shouldUpdate = true
-                    }
-                    if (shouldUpdate) {
-                        break
-                    }
-                }
-                if (shouldUpdate) {
-                    sendReviewToAnki(postReviewCache.removeAt(0)
-                            as ReviewAction.ReviewResult)
-                }
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.bearded.derek.ankicar
 
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.net.Uri
 import android.os.AsyncTask
 import android.text.TextUtils
@@ -11,26 +12,17 @@ import com.bearded.derek.ankicar.Card.Companion.build
 
 interface CardCompletionListener {
     fun onQueryComplete(cards: List<Card>)
-    fun onUpdateComplete()
+    fun onUpdateComplete(numUpdated: Int)
 }
 
 fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver, callback: CardCompletionListener) {
     val querySchedule =  QueryAnkiSchedule(deckId, limit, object : QueryAnkiSchedule.OnCompletionListener{
         override fun onComplete(reviewInfo: List<AnkiCardForReview>) {
-            val notedIds = mutableListOf<Long>()
-            reviewInfo.forEach {
-                notedIds += it.noteId
-            }
-
-            val querySpecificCards = QueryAnkiSpecificSimpleCards(notedIds, object : QueryAnkiSpecificSimpleCards
+            val querySpecificCards = QueryAnkiSpecificSimpleCards(reviewInfo, object : QueryAnkiSpecificSimpleCards
             .OnCompletionListener {
                 override fun onComplete(reviewInfo: List<AnkiCard>) {
                     val queryAnkyModels = QueryAnkiModels(reviewInfo, object : QueryAnkiModels.OnCompletionListener {
                         override fun onComplete(reviewInfo: List<AnkiCard>) {
-                            if (reviewInfo.isEmpty()) {
-                                return
-                            }
-
                             val cards = mutableListOf<Card>()
                             reviewInfo.forEach {
                                 cards += it.build(it.getCleanser())
@@ -46,6 +38,15 @@ fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver,
         }
     })
     querySchedule.execute(contentResolver)
+}
+
+fun updateAnki(reviewedCard: AnkiCardReviewed, contentResolver: ContentResolver, callback: CardCompletionListener) {
+    val updateSchedule = UpdateAnkiSchedule(reviewedCard, object : UpdateAnkiSchedule.OnCompletionListener {
+        override fun onComplete(numUpdated: Int) {
+            callback.onUpdateComplete(numUpdated)
+        }
+    })
+    updateSchedule.execute(contentResolver)
 }
 
 class QueryAnkiSchedule(val deckId: Long, val limit: Int, onCompletionListener: OnCompletionListener) :
@@ -66,17 +67,25 @@ class QueryAnkiSchedule(val deckId: Long, val limit: Int, onCompletionListener: 
 
         val scheduledCardsUri: Uri = FlashCardsContract.ReviewInfo.CONTENT_URI
 
-        val deckSelector = "limit=?, deckID=?"
-        val deckArguments = arrayOf(limit.toString(), deckId.toString())
+        val deckSelector = if (deckId == -1L) {
+            "limit=?"
+        } else {
+            "limit=?, deckID=?, "
+        }
+
+        val deckArguments = if (deckId == -1L) {
+            arrayOf(limit.toString())
+        } else {
+            arrayOf(limit.toString(), deckId.toString())
+        }
 
         cr.query(scheduledCardsUri, null, deckSelector, deckArguments,null).use {
             while (it.moveToNext()) {
-                if (TextUtils.equals(it.getString(4), EMPTY_MEDA)) {
                     reviewInfos += AnkiCardForReview(it.getLong(0),
                             it.getInt(1),
-                            it.getLong(2),
-                            it.getString(3))
-                }
+                            it.getInt(2),
+                            it.getString(3),
+                            !TextUtils.equals(it.getString(4), EMPTY_MEDA))
             }
         }
 
@@ -85,6 +94,38 @@ class QueryAnkiSchedule(val deckId: Long, val limit: Int, onCompletionListener: 
 
     override fun onPostExecute(result: List<AnkiCardForReview>?) {
         weakReferenceListener.get()?.onComplete(result ?: emptyList())
+    }
+}
+
+class UpdateAnkiSchedule(val reviewedCard: AnkiCardReviewed, onCompletionListener: OnCompletionListener) :
+        AsyncTask<ContentResolver, Void,
+                Int>() {
+
+    interface OnCompletionListener {
+        fun onComplete(numUpdated: Int)
+    }
+
+    private val weakReferenceListener: WeakReference<OnCompletionListener> = WeakReference(onCompletionListener)
+
+    override fun doInBackground(vararg params: ContentResolver?): Int {
+        val cr: ContentResolver = params[0] ?: return 0
+
+        val scheduledCardsUri: Uri = FlashCardsContract.ReviewInfo.CONTENT_URI
+
+        val values = ContentValues()
+        with(values) {
+            put(FlashCardsContract.ReviewInfo.NOTE_ID, reviewedCard.noteId)
+            put(FlashCardsContract.ReviewInfo.CARD_ORD, reviewedCard.cardOrd)
+            put(FlashCardsContract.ReviewInfo.EASE, reviewedCard.ease)
+            put(FlashCardsContract.ReviewInfo.TIME_TAKEN, reviewedCard.timeTaken)
+        }
+
+
+        return cr.update(scheduledCardsUri, values, null, null)
+    }
+
+    override fun onPostExecute(result: Int) {
+        weakReferenceListener.get()?.onComplete(result ?: 0)
     }
 }
 
@@ -139,7 +180,7 @@ class QueryAnkiSimpleCards(private val reviewInfo: List<AnkiCardForReview>, onCo
     }
 }
 
-class QueryAnkiSpecificSimpleCards(private val notedIds: List<Long>, onCompletionListener:
+class QueryAnkiSpecificSimpleCards(private val reviewInfo: List<AnkiCardForReview>, onCompletionListener:
 OnCompletionListener) :
         AsyncTask<ContentResolver, Void, List<AnkiCard>>() {
 
@@ -161,10 +202,10 @@ OnCompletionListener) :
                 FlashCardsContract.Card.ANSWER_PURE)
         val cards = mutableListOf<AnkiCard>()
 
-        notedIds.forEach {
-            noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, it.toString())
+        reviewInfo.forEach { review ->
+            noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, review.noteId.toString())
             cardsUri = Uri.withAppendedPath(noteUri, "cards")
-            specifiCardUri = Uri.withAppendedPath(cardsUri, "0")
+            specifiCardUri = Uri.withAppendedPath(cardsUri, review.cardOrd.toString())
             cr.query(specifiCardUri,
                     projection,
                     null,
@@ -181,7 +222,7 @@ OnCompletionListener) :
                 val answerSimple = it.getString(7)
                 val answerPure = it.getString(8)
                 cards +=  AnkiCard(noteId, -1L, cardOrd, cardName, did, question, answer, questionSimple, answerSimple,
-                        answerPure)
+                        answerPure, review.media, review.buttonCount)
             }
         }
 
