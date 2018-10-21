@@ -5,10 +5,13 @@ import android.content.ContentValues
 import android.net.Uri
 import android.os.AsyncTask
 import android.text.TextUtils
+import com.bearded.derek.ankicar.data.AnkiCard
 import com.ichi2.anki.FlashCardsContract
 import java.lang.ref.WeakReference
-import com.bearded.derek.ankicar.AnkiReviewCard.*
-import com.bearded.derek.ankicar.Card.Companion.build
+import com.bearded.derek.ankicar.data.AnkiReviewCard.*
+import com.bearded.derek.ankicar.data.Card
+import com.bearded.derek.ankicar.data.Card.Companion.build
+import com.bearded.derek.ankicar.data.getCleanser
 
 interface CardCompletionListener {
     fun onQueryComplete(cards: List<Card>)
@@ -221,7 +224,7 @@ OnCompletionListener) :
                 val questionSimple = it.getString(6)
                 val answerSimple = it.getString(7)
                 val answerPure = it.getString(8)
-                cards +=  AnkiCard(noteId, -1L, cardOrd, cardName, did, question, answer, questionSimple, answerSimple,
+                cards += AnkiCard(noteId, -1L, cardOrd, cardName, did, question, answer, questionSimple, answerSimple,
                         answerPure, review.media, review.buttonCount)
             }
         }

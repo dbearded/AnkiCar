@@ -1,11 +1,9 @@
-package com.bearded.derek.ankicar
+package com.bearded.derek.ankicar.data
 
-import android.util.EventLogTags
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import java.util.regex.Pattern
 
 sealed class AnkiReviewCard {
     class AnkiCardForReview(val noteId: Long, val cardOrd: Int, val buttonCount: Int, val nextReviewTimes: String,

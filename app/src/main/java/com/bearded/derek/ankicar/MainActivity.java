@@ -12,7 +12,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
+import com.bearded.derek.ankicar.data.Card;
 import com.bearded.derek.ankicar.data.ReviewAdapter;
+import com.bearded.derek.ankicar.model.AnkiDatabase;
 import com.bearded.derek.ankicar.view.ReviewGestureListener;
 import com.ichi2.anki.FlashCardsContract;
 
@@ -51,7 +53,8 @@ public class MainActivity extends AppCompatActivity implements ReviewGestureList
         gestureListener = new ReviewGestureListener(this);
         gestureDetector = new GestureDetectorCompat(this, gestureListener);
 
-        reviewAdapter = new ReviewAdapter(MainActivity.this, getContentResolver());
+        reviewAdapter = new ReviewAdapter(MainActivity.this, getContentResolver(), AnkiDatabase.Companion
+            .getInstance(getApplicationContext()));
 
         textToSpeech = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
             @Override

@@ -2,10 +2,12 @@ package com.bearded.derek.ankicar.data
 
 import android.content.ContentResolver
 import android.text.TextUtils
-import android.view.TextureView
 import com.bearded.derek.ankicar.*
+import com.bearded.derek.ankicar.model.*
+import java.util.*
 
-class ReviewAdapter(private val callback: Callback, private val contentResolver: ContentResolver) {
+class ReviewAdapter(private val callback: Callback, private val contentResolver: ContentResolver,
+                    private val ankiDatabase: AnkiDatabase) {
 
     interface Callback {
         fun reviewComplete()
@@ -53,12 +55,14 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     private val postReviewCache = mutableListOf<ReviewAction>()
     private val skipList = mutableListOf<Card>()
     private val unhandledCards = mutableSetOf<Card>()
+    private var flagged = false
 
     private lateinit var reviewQueue: List<Card>
 
     fun init(deckId: Long?) {
         if (readyForInput) {
             readyForInput = false
+            reset()
             this.deckId = deckId ?: -1L
             queryForCards()
         }
@@ -68,7 +72,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
         if (readyForInput) {
             readyForInput = false
             val timeTaken = Math.min(System.currentTimeMillis() - cardStartTime, 60*1000L)
-            addToCache(ReviewAction.ReviewResult(currentCard, ease, timeTaken))
+            addToCache(ReviewAction.ReviewResult(currentCard, ease, timeTaken, flagged))
             queryForCards()
         }
     }
@@ -76,7 +80,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     fun skip() {
         if (readyForInput) {
             readyForInput = false
-            addToCache(ReviewAction.SkipResult(currentCard))
+            addToCache(ReviewAction.SkipResult(currentCard, flagged))
             queryForCards()
         }
     }
@@ -89,9 +93,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     }
 
     fun flag() {
-        if (readyForInput) {
-
-        }
+        flagged = !flagged
     }
 
     fun getSkips(): List<Card> {
@@ -107,10 +109,35 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
         if (postReviewCache.size > cacheLimit) {
             val last = postReviewCache.removeAt(0)
             when (last) {
-                is ReviewAction.SkipResult -> skipList += last.card
-                is ReviewAction.ReviewResult -> sendReviewToAnki(last)
+                is ReviewAction.SkipResult -> persistSkip(last)
+                is ReviewAction.ReviewResult -> persistReview(last)
             }
         }
+    }
+
+    private fun persistSkip(skip: ReviewAction.SkipResult) {
+        requestInFlight = true
+        val listener = object : TransactionListener {
+            override fun onComplete() {
+                skipList += skip.card
+            }
+        }
+        insertCard(ankiDatabase, listener, DbCard(skip.card.noteId, skip.card.cardOrd, skip.card.buttonCount,
+                skip.card.question, skip.card.answer, skip.flagged, -1, -1, Date(System
+                .currentTimeMillis())))
+    }
+
+    private fun persistReview(review: ReviewAction.ReviewResult) {
+        requestInFlight = true
+        val listener = object : TransactionListener {
+            override fun onComplete() {
+                sendReviewToAnki(review)
+            }
+        }
+        
+        insertCard(ankiDatabase, listener, DbCard(review.card.noteId, review.card.cardOrd, review.card.buttonCount,
+                review.card.question, review.card.answer, review.flagged, review.ease, review.timeTaken, Date(System
+                .currentTimeMillis())))
     }
 
     private fun sendReviewToAnki(review: ReviewAction.ReviewResult) {
@@ -119,8 +146,6 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
                 mapToAnkiEase(review), System.currentTimeMillis() - review.timeTaken)
 
         updateAnki(reviewedCard, contentResolver, ankiTaskCompletionListener)
-        // TODO send update to Anki
-//        ankiTaskCompletionListener.onUpdateComplete()
     }
 
     private fun mapToAnkiEase(review: ReviewAction.ReviewResult): Int {
@@ -162,6 +187,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     private fun sendNext(card: Card) {
         cardStartTime = System.currentTimeMillis();
         readyForInput = true
+        flagged = false
         callback.nextCard(card)
     }
 
@@ -188,8 +214,9 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     }
 
     private sealed class ReviewAction {
-        class ReviewResult(val card: Card, val ease: Int, val timeTaken: Long): ReviewAction()
-        class SkipResult(val card: Card): ReviewAction()
+        class ReviewResult(val card: Card, val ease: Int, val timeTaken: Long, var flagged: Boolean = false):
+                ReviewAction()
+        class SkipResult(val card: Card, var flagged: Boolean = false): ReviewAction()
     }
 
     private fun ReviewAction.getCard(): Card {
