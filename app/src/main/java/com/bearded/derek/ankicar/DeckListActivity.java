@@ -52,7 +52,7 @@ public class DeckListActivity extends AppCompatActivity {
             }
         });
 
-        if (findViewById(R.id.card_detail_container) != null) {
+        if (findViewById(R.id.deck_detail_container) != null) {
             // The detail container view will be present only in the
             // large-screen layouts (res/values-w900dp).
             // If this view is present, then the
@@ -60,7 +60,7 @@ public class DeckListActivity extends AppCompatActivity {
             mTwoPane = true;
         }
 
-        View recyclerView = findViewById(R.id.card_list);
+        View recyclerView = findViewById(R.id.deck_list);
         assert recyclerView != null;
         setupRecyclerView((RecyclerView) recyclerView);
     }
@@ -88,7 +88,7 @@ public class DeckListActivity extends AppCompatActivity {
                     DeckDetailFragment fragment = new DeckDetailFragment();
                     fragment.setArguments(arguments);
                     mParentActivity.getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.card_detail_container, fragment)
+                        .replace(R.id.deck_detail_container, fragment)
                         .commit();
                 } else {
                     Context context = view.getContext();

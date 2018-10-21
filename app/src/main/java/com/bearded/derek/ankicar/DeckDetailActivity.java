@@ -58,7 +58,7 @@ public class DeckDetailActivity extends AppCompatActivity {
             DeckDetailFragment fragment = new DeckDetailFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
-                .add(R.id.card_detail_container, fragment)
+                .add(R.id.deck_detail_container, fragment)
                 .commit();
         }
     }
