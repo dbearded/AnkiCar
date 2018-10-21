@@ -9,7 +9,7 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".ReviewActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -22,18 +22,18 @@
                 android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
-                android:name=".CardListActivity"
+                android:name=".DeckListActivity"
                 android:label="@string/title_card_list"
                 android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
-                android:name=".CardDetailActivity"
+                android:name=".DeckDetailActivity"
                 android:label="@string/title_card_detail"
-                android:parentActivityName=".CardListActivity"
+                android:parentActivityName=".DeckListActivity"
                 android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.bearded.derek.ankicar.CardListActivity"/>
+                    android:value="com.bearded.derek.ankicar.DeckListActivity"/>
         </activity>
     </application>
 

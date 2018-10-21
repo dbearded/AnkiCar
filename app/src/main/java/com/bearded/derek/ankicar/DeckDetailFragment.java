@@ -13,11 +13,11 @@ import com.bearded.derek.ankicar.dummy.DummyContent;
 
 /**
  * A fragment representing a single AnkiCard detail screen.
- * This fragment is either contained in a {@link CardListActivity}
- * in two-pane mode (on tablets) or a {@link CardDetailActivity}
+ * This fragment is either contained in a {@link DeckListActivity}
+ * in two-pane mode (on tablets) or a {@link DeckDetailActivity}
  * on handsets.
  */
-public class CardDetailFragment extends Fragment {
+public class DeckDetailFragment extends Fragment {
 
     /**
      * The fragment argument representing the item ID that this fragment
@@ -34,7 +34,7 @@ public class CardDetailFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public CardDetailFragment() {
+    public DeckDetailFragment() {
     }
 
     @Override
@@ -58,7 +58,7 @@ public class CardDetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
         Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.card_detail, container, false);
+        View rootView = inflater.inflate(R.layout.deck_detail, container, false);
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {

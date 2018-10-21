@@ -24,7 +24,7 @@ import java.util.Locale;
 
 import kotlin.Pair;
 
-public class MainActivity extends AppCompatActivity implements ReviewGestureListener.ReviewGestureCallback,
+public class ReviewActivity extends AppCompatActivity implements ReviewGestureListener.ReviewGestureCallback,
     ReviewAdapter.Callback {
 
     private static final int REQUEST_PERMISSION_FLASHCARD = 2000;
@@ -53,10 +53,10 @@ public class MainActivity extends AppCompatActivity implements ReviewGestureList
         gestureListener = new ReviewGestureListener(this);
         gestureDetector = new GestureDetectorCompat(this, gestureListener);
 
-        reviewAdapter = new ReviewAdapter(MainActivity.this, getContentResolver(), AnkiDatabase.Companion
+        reviewAdapter = new ReviewAdapter(ReviewActivity.this, getContentResolver(), AnkiDatabase.Companion
             .getInstance(getApplicationContext()));
 
-        textToSpeech = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
+        textToSpeech = new TextToSpeech(ReviewActivity.this, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
                 if (status == TextToSpeech.SUCCESS) {

@@ -22,11 +22,11 @@ import java.util.List;
  * An activity representing a list of Cards. This activity
  * has different presentations for handset and tablet-size devices. On
  * handsets, the activity presents a list of items, which when touched,
- * lead to a {@link CardDetailActivity} representing
+ * lead to a {@link DeckDetailActivity} representing
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class CardListActivity extends AppCompatActivity {
+public class DeckListActivity extends AppCompatActivity {
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -39,11 +39,11 @@ public class CardListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_list);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -72,7 +72,7 @@ public class CardListActivity extends AppCompatActivity {
     public static class SimpleCardRecyclerViewAdapter
         extends RecyclerView.Adapter<SimpleCardRecyclerViewAdapter.ViewHolder> {
 
-        private final CardListActivity mParentActivity;
+        private final DeckListActivity mParentActivity;
 
         private final List<DummyContent.DummyItem> mValues;
 
@@ -84,23 +84,23 @@ public class CardListActivity extends AppCompatActivity {
                 DummyContent.DummyItem item = (DummyContent.DummyItem) view.getTag();
                 if (mTwoPane) {
                     Bundle arguments = new Bundle();
-                    arguments.putString(CardDetailFragment.ARG_ITEM_ID, item.id);
-                    CardDetailFragment fragment = new CardDetailFragment();
+                    arguments.putString(DeckDetailFragment.ARG_ITEM_ID, item.id);
+                    DeckDetailFragment fragment = new DeckDetailFragment();
                     fragment.setArguments(arguments);
                     mParentActivity.getSupportFragmentManager().beginTransaction()
                         .replace(R.id.card_detail_container, fragment)
                         .commit();
                 } else {
                     Context context = view.getContext();
-                    Intent intent = new Intent(context, CardDetailActivity.class);
-                    intent.putExtra(CardDetailFragment.ARG_ITEM_ID, item.id);
+                    Intent intent = new Intent(context, DeckDetailActivity.class);
+                    intent.putExtra(DeckDetailFragment.ARG_ITEM_ID, item.id);
 
                     context.startActivity(intent);
                 }
             }
         };
 
-        SimpleCardRecyclerViewAdapter(CardListActivity parent,
+        SimpleCardRecyclerViewAdapter(DeckListActivity parent,
             List<DummyContent.DummyItem> items,
             boolean twoPane) {
             mValues = items;
@@ -111,7 +111,7 @@ public class CardListActivity extends AppCompatActivity {
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.card_list_content, parent, false);
+                .inflate(R.layout.deck_list_content, parent, false);
             return new ViewHolder(view);
         }
 

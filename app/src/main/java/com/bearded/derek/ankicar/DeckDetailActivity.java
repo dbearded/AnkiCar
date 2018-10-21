@@ -14,9 +14,9 @@ import android.view.MenuItem;
  * An activity representing a single Card detail screen. This
  * activity is only used on narrow width devices. On tablet-size devices,
  * item details are presented side-by-side with a list of items
- * in a {@link CardListActivity}.
+ * in a {@link DeckListActivity}.
  */
-public class CardDetailActivity extends AppCompatActivity {
+public class DeckDetailActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +53,9 @@ public class CardDetailActivity extends AppCompatActivity {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(CardDetailFragment.ARG_ITEM_ID,
-                getIntent().getStringExtra(CardDetailFragment.ARG_ITEM_ID));
-            CardDetailFragment fragment = new CardDetailFragment();
+            arguments.putString(DeckDetailFragment.ARG_ITEM_ID,
+                getIntent().getStringExtra(DeckDetailFragment.ARG_ITEM_ID));
+            DeckDetailFragment fragment = new DeckDetailFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
                 .add(R.id.card_detail_container, fragment)
@@ -73,7 +73,7 @@ public class CardDetailActivity extends AppCompatActivity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
-            navigateUpTo(new Intent(this, CardListActivity.class));
+            navigateUpTo(new Intent(this, DeckListActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
