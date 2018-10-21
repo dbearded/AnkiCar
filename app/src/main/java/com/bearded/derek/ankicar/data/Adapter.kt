@@ -2,8 +2,8 @@ package com.bearded.derek.ankicar.data
 
 import android.content.ContentResolver
 import android.text.TextUtils
-import com.bearded.derek.ankicar.*
 import com.bearded.derek.ankicar.model.*
+import com.bearded.derek.ankicar.model.anki.*
 import java.util.*
 
 class ReviewAdapter(private val callback: Callback, private val contentResolver: ContentResolver,

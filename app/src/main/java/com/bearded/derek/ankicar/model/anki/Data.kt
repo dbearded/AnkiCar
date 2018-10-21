@@ -1,4 +1,4 @@
-package com.bearded.derek.ankicar.data
+package com.bearded.derek.ankicar.model.anki
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document

@@ -1,17 +1,14 @@
-package com.bearded.derek.ankicar
+package com.bearded.derek.ankicar.model.anki
 
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.net.Uri
 import android.os.AsyncTask
 import android.text.TextUtils
-import com.bearded.derek.ankicar.data.AnkiCard
 import com.ichi2.anki.FlashCardsContract
 import java.lang.ref.WeakReference
-import com.bearded.derek.ankicar.data.AnkiReviewCard.*
-import com.bearded.derek.ankicar.data.Card
-import com.bearded.derek.ankicar.data.Card.Companion.build
-import com.bearded.derek.ankicar.data.getCleanser
+import com.bearded.derek.ankicar.model.anki.AnkiReviewCard.*
+import com.bearded.derek.ankicar.model.anki.Card.Companion.build
 
 interface CardCompletionListener {
     fun onQueryComplete(cards: List<Card>)
@@ -19,10 +16,9 @@ interface CardCompletionListener {
 }
 
 fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver, callback: CardCompletionListener) {
-    val querySchedule =  QueryAnkiSchedule(deckId, limit, object : QueryAnkiSchedule.OnCompletionListener{
+    val querySchedule = QueryAnkiSchedule(deckId, limit, object : QueryAnkiSchedule.OnCompletionListener {
         override fun onComplete(reviewInfo: List<AnkiCardForReview>) {
-            val querySpecificCards = QueryAnkiSpecificSimpleCards(reviewInfo, object : QueryAnkiSpecificSimpleCards
-            .OnCompletionListener {
+            val querySpecificCards = QueryAnkiSpecificSimpleCards(reviewInfo, object : QueryAnkiSpecificSimpleCards.OnCompletionListener {
                 override fun onComplete(reviewInfo: List<AnkiCard>) {
                     val queryAnkyModels = QueryAnkiModels(reviewInfo, object : QueryAnkiModels.OnCompletionListener {
                         override fun onComplete(reviewInfo: List<AnkiCard>) {

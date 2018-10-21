@@ -12,7 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
-import com.bearded.derek.ankicar.data.Card;
+import com.bearded.derek.ankicar.model.anki.Card;
 import com.bearded.derek.ankicar.data.ReviewAdapter;
 import com.bearded.derek.ankicar.model.AnkiDatabase;
 import com.bearded.derek.ankicar.view.ReviewGestureListener;
