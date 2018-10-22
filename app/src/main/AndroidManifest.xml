@@ -9,31 +9,18 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <activity android:name=".ReviewActivity">
+        <activity android:name=".ReviewActivity"
+                  android:parentActivityName=".EntryActivity">
+        </activity>
+        <activity
+                android:name=".EntryActivity"
+                android:label="@string/title_activity_entry_acitivty"
+                android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-        <activity
-                android:name=".ScrollingActivity"
-                android:label="@string/title_activity_scrolling"
-                android:theme="@style/AppTheme.NoActionBar">
-        </activity>
-        <activity
-                android:name=".DeckListActivity"
-                android:label="@string/title_card_list"
-                android:theme="@style/AppTheme.NoActionBar">
-        </activity>
-        <activity
-                android:name=".DeckDetailActivity"
-                android:label="@string/title_card_detail"
-                android:parentActivityName=".DeckListActivity"
-                android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.bearded.derek.ankicar.DeckListActivity"/>
         </activity>
     </application>
 
