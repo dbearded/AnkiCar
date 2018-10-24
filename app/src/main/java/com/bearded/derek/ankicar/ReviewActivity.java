@@ -72,6 +72,11 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
         isQuestion = true; // Always start with a question
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        reviewAdapter.flush();
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {

@@ -1,8 +1,14 @@
 package com.bearded.derek.ankicar
 
+import android.content.Intent
+import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
+import android.widget.TextView
+import com.bearded.derek.ankicar.model.AnkiDatabase
+import com.bearded.derek.ankicar.model.CardDao
+import com.bearded.derek.ankicar.model.DbCard
 
 import kotlinx.android.synthetic.main.activity_entry_activity.*
 
@@ -14,9 +20,8 @@ class EntryActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+            val intent = Intent(this@EntryActivity, ReviewActivity::class.java)
+            startActivity(intent)
         }
     }
-
 }

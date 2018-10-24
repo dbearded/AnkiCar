@@ -7,7 +7,7 @@ import java.lang.ref.WeakReference
 import java.util.*
 
 @Database(entities = [DbCard::class], version = 1, exportSchema = false)
-@TypeConverters(Converters.Companion::class)
+@TypeConverters(Converters::class)
 abstract class AnkiDatabase : RoomDatabase() {
 
     abstract fun cardDao(): CardDao
@@ -68,16 +68,13 @@ interface CardDao {
 }
 
 class Converters {
-    companion object {
-        @TypeConverter
-        fun fromTimeStamp(value: Long): Date {
-            return Date(value)
-        }
-
-        @TypeConverter
-        fun dateToTimestamp(date: Date): Long {
-            return date.time
-        }
+    @TypeConverter
+    fun fromTimeStamp(value: Long): Date {
+        return Date(value)
+    }
+    @TypeConverter
+    fun dateToTimestamp(date: Date): Long {
+        return date.time
     }
 }
 

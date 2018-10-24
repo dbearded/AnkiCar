@@ -25,7 +25,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
             requestInFlight = false
             reviewQueue = cards
             val prevLimit = postReviewCache.size + skipList.size + unhandledCards.size +  1
-            cards.filterTo(unhandledCards) {
+            unhandledCards = cards.filter {
                 TextUtils.equals(it.question, UNHANDLED)
             }
             val querySize = reviewQueue.size
@@ -54,7 +54,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     private var cardStartTime = -1L
     private val postReviewCache = mutableListOf<ReviewAction>()
     private val skipList = mutableListOf<Card>()
-    private val unhandledCards = mutableSetOf<Card>()
+    private var unhandledCards = listOf<Card>()
     private var flagged = false
 
     private lateinit var reviewQueue: List<Card>
@@ -98,6 +98,13 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
 
     fun getSkips(): List<Card> {
         return skipList.toList()
+    }
+
+    fun flush() {
+        cacheLimit = 0
+        while (postReviewCache.size > 0) {
+            handleOverflow()
+        }
     }
 
     private fun addToCache(reviewAction: ReviewAction) {
