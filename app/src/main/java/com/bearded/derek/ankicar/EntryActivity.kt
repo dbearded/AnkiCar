@@ -23,5 +23,10 @@ class EntryActivity : AppCompatActivity() {
             val intent = Intent(this@EntryActivity, ReviewActivity::class.java)
             startActivity(intent)
         }
+
+        with(supportFragmentManager.beginTransaction()) {
+            add(EntryActivityFragment(), "ReviewListFragment")
+            commit()
+        }
     }
 }

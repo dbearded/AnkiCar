@@ -33,11 +33,17 @@ class CardListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<CardL
     fun refresh() {
         val task = object : AsyncTask<AnkiDatabase, Void, List<DbCard>>() {
             override fun doInBackground(vararg params: AnkiDatabase?): List<DbCard> {
-                params[0]?.let {
-                    return it.cardDao().getAll().sortedBy {
-                        it.time
-                    }.asReversed()
-                }
+                val db = params[0]
+                val dao = db!!.cardDao()
+                val list = dao.getAll()
+                val sorted = list.sortedBy { it.time }
+                val reversed = sorted.asReversed()
+                return reversed
+//                params[0]?.let {
+//                    return it.cardDao().getAll().sortedBy {
+//                        it.time
+//                    }.asReversed()
+//                }
 
                 return emptyList()
             }
