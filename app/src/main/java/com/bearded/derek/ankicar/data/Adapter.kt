@@ -129,6 +129,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
                 skipList += skip.card
             }
         }
+
         insertCard(ankiDatabase, listener, DbCard(skip.card.noteId, skip.card.cardOrd, skip.card.buttonCount,
                 skip.card.question, skip.card.answer, skip.flagged, -1, -1, Date(System
                 .currentTimeMillis())))

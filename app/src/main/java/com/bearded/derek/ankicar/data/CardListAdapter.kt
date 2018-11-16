@@ -1,6 +1,5 @@
 package com.bearded.derek.ankicar.data
 
-import android.content.Context
 import android.os.AsyncTask
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -59,7 +58,7 @@ class CardListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<CardL
     inner class CardViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val question: TextView = itemView.findViewById(R.id.question)
         val answer: TextView = itemView.findViewById(R.id.answer)
-        val cardOrd: TextView = itemView.findViewById(R.id.card_ord)
+        val cardOrd: TextView = itemView.findViewById(R.id.card_num)
         val ease: TextView = itemView.findViewById(R.id.ease)
     }
 }

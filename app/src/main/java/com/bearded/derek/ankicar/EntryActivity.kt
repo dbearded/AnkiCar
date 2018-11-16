@@ -25,7 +25,7 @@ class EntryActivity : AppCompatActivity() {
         }
 
         with(supportFragmentManager.beginTransaction()) {
-            add(EntryActivityFragment(), "ReviewListFragment")
+            add(R.id.card_list, EntryActivityFragment(), "ReviewListFragment")
             commit()
         }
     }

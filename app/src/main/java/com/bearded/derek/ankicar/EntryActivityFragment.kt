@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.AsyncTask
 import android.support.v4.app.Fragment
 import android.os.Bundle
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -33,6 +34,8 @@ class EntryActivityFragment : Fragment() {
         adapter = CardListAdapter(db!!)
         recyclerView = view.findViewById(R.id.recycler_view)
         recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(activity)
+
         adapter.refresh()
     }
 }

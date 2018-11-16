@@ -73,12 +73,6 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        reviewAdapter.flush();
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (this.gestureDetector.onTouchEvent(event)) {
             return true;
@@ -103,6 +97,7 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
 
     @Override
     protected void onDestroy() {
+        reviewAdapter.flush();
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
@@ -112,10 +107,11 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
 
     @Override
     public boolean onFling(@NotNull Pair<String, Double> direction) {
-        if (isTtsInitComplete) {
-            textToSpeech.speak("Flinging " + direction.getFirst(), TextToSpeech.QUEUE_ADD, null,
-                "fling:"+direction.getSecond().toString());
-        }
+        // Commenting because too verbose
+//        if (isTtsInitComplete) {
+//            textToSpeech.speak("Flinging " + direction.getFirst(), TextToSpeech.QUEUE_FLUSH, null,
+//                "fling:"+direction.getSecond().toString());
+//        }
 
         if (isCardAdapterInit) {
             switch (direction.getFirst()) {
@@ -141,22 +137,26 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
 
     @Override
     public void onLongPress() {
-        if (isTtsInitComplete) {
-            textToSpeech.speak("Long press", TextToSpeech.QUEUE_ADD, null,
-                "long press");
-        }
+        // Too verbose
+//        if (isTtsInitComplete) {
+//            textToSpeech.speak("Long press", TextToSpeech.QUEUE_FLUSH, null,
+//                "long press");
+//        }
 
         if (!isQuestion && isCardAdapterInit) {
             reviewAdapter.answer(1);
+            textToSpeech.speak("Again", TextToSpeech.QUEUE_FLUSH, null,
+                "Again");
         }
     }
 
     @Override
     public boolean onDoubleTap() {
-        if (isTtsInitComplete) {
-            textToSpeech.speak("Double tapping", TextToSpeech.QUEUE_ADD, null,
-                "double tap");
-        }
+        // Commenting because too verbose
+//        if (isTtsInitComplete) {
+//            textToSpeech.speak("Double tapping", TextToSpeech.QUEUE_FLUSH, null,
+//                "double tap");
+//        }
 
         if (isCardAdapterInit) {
             ttsCard();
@@ -168,24 +168,24 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
     private void onUp() {
         if (isQuestion) {
             reviewAdapter.skip();
-            textToSpeech.speak("Skipping", TextToSpeech.QUEUE_ADD, null,
-                "Skipping " + currentCard.getNoteId());
+            textToSpeech.speak("Skip", TextToSpeech.QUEUE_FLUSH, null,
+                "Skip " + currentCard.getNoteId());
         } else {
             reviewAdapter.answer(4);
-            textToSpeech.speak("Too easy", TextToSpeech.QUEUE_ADD, null,
-                "Too easy " + currentCard.getNoteId());
+            textToSpeech.speak("Easy", TextToSpeech.QUEUE_FLUSH, null,
+                "Easy " + currentCard.getNoteId());
         }
     }
 
     private void onDown() {
         if (isQuestion) {
             reviewAdapter.flag();
-            textToSpeech.speak("Flagging", TextToSpeech.QUEUE_ADD, null,
-                "Flagging " + currentCard.getNoteId());
+            textToSpeech.speak("Flag", TextToSpeech.QUEUE_FLUSH, null,
+                "Flag " + currentCard.getNoteId());
         } else {
             reviewAdapter.answer(2);
-            textToSpeech.speak("A little hard", TextToSpeech.QUEUE_ADD, null,
-                "A little hard " + currentCard.getNoteId());
+            textToSpeech.speak("Hard", TextToSpeech.QUEUE_FLUSH, null,
+                "Hard " + currentCard.getNoteId());
         }
     }
 
@@ -194,7 +194,7 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
             revealAnswer();
         } else {
             reviewAdapter.answer(3);
-            textToSpeech.speak("Good", TextToSpeech.QUEUE_ADD, null,
+            textToSpeech.speak("Good", TextToSpeech.QUEUE_FLUSH, null,
                 "Good " + currentCard.getNoteId());
         }
     }
@@ -202,8 +202,8 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
     private void onRight() {
         if (isQuestion) {
             reviewAdapter.previous();
-            textToSpeech.speak("Going backwards", TextToSpeech.QUEUE_ADD, null,
-                "Going backwards " + currentCard.getNoteId());
+            textToSpeech.speak("Undo", TextToSpeech.QUEUE_FLUSH, null,
+                "Undo " + currentCard.getNoteId());
         } else {
             hideAnswer();
         }
@@ -215,7 +215,7 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
             textToSpeech.speak(currentCard.getQuestion(), TextToSpeech.QUEUE_ADD, null,
                 String.valueOf(currentCard.getNoteId()) + "question");
         } else {
-            textToSpeech.speak(currentCard.getAnswer(), TextToSpeech.QUEUE_ADD, null,
+            textToSpeech.speak(currentCard.getAnswer(), TextToSpeech.QUEUE_FLUSH, null,
                 String.valueOf(currentCard.getNoteId()) + "answer");
         }
     }
@@ -235,7 +235,7 @@ public class ReviewActivity extends AppCompatActivity implements ReviewGestureLi
 
     @Override
     public void reviewComplete() {
-        textToSpeech.speak("Great job, your review is complete", TextToSpeech.QUEUE_ADD, null,
+        textToSpeech.speak("Great job, your review is complete", TextToSpeech.QUEUE_FLUSH, null,
             "Review Complete");
     }
 
