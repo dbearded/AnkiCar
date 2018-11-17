@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="theme_dependent_theme_icon" format="reference"/>
+    <attr name="theme_name" format="reference"/>
+</resources>

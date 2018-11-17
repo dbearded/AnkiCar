@@ -14,8 +14,7 @@
         </activity>
         <activity
                 android:name=".EntryActivity"
-                android:label="@string/title_activity_entry_acitivty"
-                android:theme="@style/AppTheme.NoActionBar">
+                android:label="@string/title_activity_entry_acitivty">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 

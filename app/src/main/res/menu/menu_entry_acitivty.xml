@@ -2,8 +2,9 @@
       xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
       tools:context="com.bearded.derek.ankicar.EntryActivity">
-    <item android:id="@+id/action_settings"
-          android:orderInCategory="100"
-          android:title="@string/action_settings"
-          app:showAsAction="never"/>
+
+    <item android:id="@+id/theme_toggle"
+          android:icon="?attr/theme_dependent_theme_icon"
+          android:title="Theme"
+        app:showAsAction="always"/>
 </menu>

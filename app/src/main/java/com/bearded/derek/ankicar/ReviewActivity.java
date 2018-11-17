@@ -24,7 +24,7 @@ import java.util.Locale;
 
 import kotlin.Pair;
 
-public class ReviewActivity extends AppCompatActivity implements ReviewGestureListener.ReviewGestureCallback,
+public class ReviewActivity extends BaseActivity implements ReviewGestureListener.ReviewGestureCallback,
     ReviewAdapter.Callback {
 
     private static final int REQUEST_PERMISSION_FLASHCARD = 2000;

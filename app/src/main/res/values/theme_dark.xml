@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="theme_dark_primary">#3d3d3d</color>
+    <color name="theme_dark_primary_dark">@color/black</color>
+    <color name="theme_dark_primary_light">@color/material_grey_800</color>
+    <color name="theme_dark_accent">@color/material_light_blue_700</color>
+    <color name="theme_dark_primary_text">@color/white</color>
+    <color name="theme_dark_secondary_text">#b2ffffff</color>
+    <color name="theme_dark_row_current">#393939</color>
+    <color name="theme_dark_drawer_row_current">#33999999</color>
+    <color name="theme_dark_drawer_item">#DEFFFFFF</color>
+
+    <style name="Theme_Dark" parent="@style/Theme.AppCompat">
+        <!-- Android colors -->
+        <item name="colorPrimary">@color/theme_dark_primary</item>
+        <item name="colorPrimaryDark">@color/theme_dark_primary_dark</item>
+        <item name="colorAccent">@color/theme_dark_accent</item>
+        <item name="android:textColor">@color/theme_dark_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_dark_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_dark_secondary_text</item>
+        <item name="android:colorBackground">@color/material_theme_grey</item>
+        <item name="android:windowBackground">@color/material_theme_grey</item>
+        <!-- Action bar styles -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="actionModeBackground">@color/theme_dark_primary</item>
+        <!-- Options Menu styles -->
+        <item name="theme_dependent_theme_icon">@drawable/ic_theme_light</item>
+        <item name="theme_name">@string/theme_dark</item>
+    </style>
+</resources>

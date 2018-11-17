@@ -1,19 +1,17 @@
 package com.bearded.derek.ankicar
 
 import android.content.Intent
-import android.os.AsyncTask
 import android.os.Bundle
-import android.support.design.widget.Snackbar
+import android.preference.PreferenceManager
 import android.support.v7.app.AppCompatActivity
-import android.widget.TextView
-import android.widget.Toast
-import com.bearded.derek.ankicar.model.AnkiDatabase
-import com.bearded.derek.ankicar.model.CardDao
-import com.bearded.derek.ankicar.model.DbCard
+import android.util.TypedValue
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 
 import kotlinx.android.synthetic.main.activity_entry_activity.*
 
-class EntryActivity : AppCompatActivity() {
+class EntryActivity : BaseActivity() {
 
     companion object {
 
@@ -43,10 +41,13 @@ class EntryActivity : AppCompatActivity() {
 //            task.execute()
         }
 
-        with(supportFragmentManager.beginTransaction()) {
-            add(R.id.card_list, EntryActivityFragment(), "ReviewListFragment")
-            commit()
+        if (supportFragmentManager.findFragmentById(R.id.card_list) == null) {
+            with(supportFragmentManager.beginTransaction()) {
+                add(R.id.card_list, EntryActivityFragment(), "ReviewListFragment")
+                commit()
+            }
         }
+
     }
 
     // Not working yet
@@ -56,6 +57,32 @@ class EntryActivity : AppCompatActivity() {
         if (requestCode == EntryActivity.REQUEST_REVIEW) {
             val fragment = supportFragmentManager.findFragmentById(R.id.card_list) as EntryActivityFragment?
             fragment?.adapter?.notifyDataSetChanged()
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.menu_entry_acitivty, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        return when (item.itemId) {
+            R.id.theme_toggle -> {
+                val prefs = PreferenceManager.getDefaultSharedPreferences(this@EntryActivity)
+                val typedValue = TypedValue()
+                theme.resolveAttribute(R.attr.theme_dependent_theme_icon, typedValue, true)
+                if (typedValue.resourceId == R.drawable.ic_theme_dark) {
+                    prefs.edit().putString("theme", resources.getString(R.string.theme_dark)).commit()
+                } else {
+                    prefs.edit().putString("theme", resources.getString(R.string.theme_light)).commit()
+                }
+                recreate()
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }
