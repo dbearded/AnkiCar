@@ -35,7 +35,7 @@ class CardListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<CardL
                 val db = params[0]
                 val dao = db!!.cardDao()
                 val list = dao.getAll()
-                val sorted = list.sortedBy { it.time }
+                val sorted = list.sortedBy { it.date }
                 val reversed = sorted.asReversed()
                 return reversed
 //                params[0]?.let {
