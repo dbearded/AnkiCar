@@ -1,5 +1,6 @@
 package com.bearded.derek.ankicar.model
 
+import android.arch.persistence.db.SimpleSQLiteQuery
 import android.arch.persistence.room.*
 import android.content.Context
 import android.os.AsyncTask
@@ -26,6 +27,26 @@ abstract class AnkiDatabase : RoomDatabase() {
             return Room.databaseBuilder(context, AnkiDatabase::class.java, "db.db")
                     .build()
         }
+
+        fun clearAndResetAllTables(): Boolean {
+            val db = INSTANCE ?: return false
+
+            // reset all auto-incrementValues
+            val query = SimpleSQLiteQuery("DELETE FROM sqlite_sequence")
+
+            db.beginTransaction()
+            return try {
+                db.clearAllTables()
+                db.query(query)
+                db.setTransactionSuccessful()
+                true
+            } catch (e: Exception) {
+                false
+            } finally {
+                db.endTransaction()
+            }
+        }
+
     }
 }
 

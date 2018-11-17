@@ -1,6 +1,7 @@
 package com.bearded.derek.ankicar
 
 import android.content.Context
+import android.content.Intent
 import android.os.AsyncTask
 import android.support.v4.app.Fragment
 import android.os.Bundle
@@ -37,5 +38,13 @@ class EntryActivityFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(activity)
 
         adapter.refresh()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == EntryActivity.REQUEST_REVIEW) {
+            adapter.notifyDataSetChanged()
+        }
     }
 }
