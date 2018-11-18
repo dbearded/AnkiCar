@@ -28,3 +28,8 @@ fun cosineSimilarity(x1: Float, y1: Float, x2: Float, y2: Float): Double {
 fun angleBetweenVectors(x1: Float, y1: Float, x2: Float, y2: Float): Double {
     return Math.atan2(scalarCrossProduct(x1, y1, x2, y2), dotProduct(x1, y1, x2, y2))
 }
+
+fun pxToDp(px: Float, density: Float): Int = (px / density).toInt()
+
+fun dpToPx(dp: Int, density: Float): Int = (dp * density).toInt()
+
