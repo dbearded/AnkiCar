@@ -7,11 +7,13 @@ import android.os.AsyncTask
 import java.lang.ref.WeakReference
 import java.util.*
 
-@Database(entities = [DbCard::class], version = 1, exportSchema = false)
+@Database(entities = [DbCard::class, Review::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AnkiDatabase : RoomDatabase() {
 
     abstract fun cardDao(): CardDao
+
+    abstract fun reviewDao(): ReviewDao
 
     companion object {
         private var INSTANCE: AnkiDatabase? = null
@@ -25,6 +27,7 @@ abstract class AnkiDatabase : RoomDatabase() {
 
         private fun buildDatabase(context: Context): AnkiDatabase {
             return Room.databaseBuilder(context, AnkiDatabase::class.java, "db.db")
+                    .fallbackToDestructiveMigration()
                     .build()
         }
 
@@ -51,7 +54,7 @@ abstract class AnkiDatabase : RoomDatabase() {
 }
 
 @Entity
-class DbCard (@PrimaryKey val noteId: Long,
+data class DbCard (@PrimaryKey val noteId: Long,
               val cardOrd: Int,
               val buttonCount: Int,
               val question: String,
@@ -60,6 +63,11 @@ class DbCard (@PrimaryKey val noteId: Long,
               val ease: Int,
               val time: Long,
               val date: Date)
+
+@Entity
+data class Review (val startDate: Date, val endDate: Date) {
+    @PrimaryKey(autoGenerate = true) var reviewId: Long = 0
+}
 
 @Dao
 interface CardDao {
@@ -85,6 +93,21 @@ interface CardDao {
     fun insert(card: DbCard): Long
 
     @Query("DELETE from DbCard")
+    fun deleteAll()
+}
+
+@Dao
+interface ReviewDao {
+    @Query("select * FROM Review")
+    fun getAll(): List<Review>
+
+    @Query("select * FROM Review WHERE startDate >= :from AND endDate <= :to")
+    fun getAllBetweenDates(from: Date, to: Date): List<Review>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(review: Review): Long
+
+    @Query("DELETE from Review")
     fun deleteAll()
 }
 

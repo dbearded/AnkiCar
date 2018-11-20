@@ -1,6 +1,7 @@
 package com.bearded.derek.ankicar;
 
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
@@ -12,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
+import com.bearded.derek.ankicar.model.Review;
 import com.bearded.derek.ankicar.model.anki.Card;
 import com.bearded.derek.ankicar.data.ReviewAdapter;
 import com.bearded.derek.ankicar.model.AnkiDatabase;
@@ -20,6 +22,8 @@ import com.ichi2.anki.FlashCardsContract;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import kotlin.Pair;
@@ -32,6 +36,30 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
     private boolean isTtsInitComplete;
     private boolean isCardAdapterInit;
     private boolean isQuestion; // !isQuestion == isAnswer always
+
+    private Date startTime;
+
+    @Override
+    protected void onPause() {
+        AsyncTask<AnkiDatabase, Void, Void> task = new AsyncTask<AnkiDatabase, Void, Void>() {
+            @Override
+            protected Void doInBackground(AnkiDatabase... ankiDatabases) {
+                AnkiDatabase db = ankiDatabases[0];
+                db.reviewDao().insert(new Review(startTime, new Date(System.currentTimeMillis())));
+                return null;
+            }
+        };
+        task.execute(AnkiDatabase.Companion.getInstance(this));
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        startTime = new Date(System.currentTimeMillis());
+    }
+
     private TextView questionTextView, answerTextView;
     private ReviewAdapter reviewAdapter;
     private GestureDetectorCompat gestureDetector;
