@@ -3,7 +3,6 @@ package com.bearded.derek.ankicar
 import android.content.Intent
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.v7.app.AppCompatActivity
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuInflater
@@ -27,18 +26,6 @@ class EntryActivity : BaseActivity() {
         fab.setOnClickListener { view ->
             val intent = Intent(this@EntryActivity, ReviewActivity::class.java)
             startActivityForResult(intent, REQUEST_REVIEW)
-
-            // For deleting tables
-//            val task = object : AsyncTask<Void, Void, Boolean>() {
-//                override fun doInBackground(vararg params: Void?): Boolean {
-//                    return AnkiDatabase.clearAndResetAllTables()
-//                }
-//
-//                override fun onPostExecute(result: Boolean?) {
-//                    Toast.makeText(this@EntryActivity, "Tables deleted", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//            task.execute()
         }
 
         if (supportFragmentManager.findFragmentById(R.id.card_list) == null) {
