@@ -11,7 +11,6 @@ import com.bearded.derek.ankicar.data.ReviewListAdapter
 import com.bearded.derek.ankicar.data.VerticalSpaceItemDecorator
 import com.bearded.derek.ankicar.model.AnkiDatabase
 import com.bearded.derek.ankicar.model.CardDao
-import com.ichi2.anki.FlashCardsContract
 
 /**
  * A placeholder fragment containing a simple view.

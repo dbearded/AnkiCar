@@ -65,7 +65,6 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
         val task = object : AsyncTask<AnkiDatabase, Void, List<Item>>() {
             override fun doInBackground(vararg params: AnkiDatabase?): List<Item> {
                 val db = params[0] ?: return emptyList()
-//                val cardDao = db!!.cardDao()
 
                 val reviewDao = db.reviewDao()
 
@@ -75,20 +74,13 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
 
                 val items = mutableListOf<Item>()
                 reversed.forEach {
-                    items.add(Header(it))
-//                    items.addAll(cardDao.getAllBetweenDates(it.startDate, it.endDate).reversed().map {
-//                        Card(it)
-//                    })
-//                    val dao = db.getDao()
-//                    val results = dao.daoMethod(it.startDate, it.endDate)
-//                    val transformed = results.transformation()
-
-                    items.addAll(db.getDao().daoMethod(it.startDate, it.endDate).transformation().map {
+                    val cards = db.getDao().daoMethod(it.startDate, it.endDate).transformation().map {
                         Card(it)
-                    })
-//                    items.addAll(dao.daoMethod(it.startDate, it.endDate).reversed().map {
-//                        Card(it)
-//                    })
+                    }
+                    if (cards.isNotEmpty()) {
+                        items.add(Header(it))
+                        items.addAll(cards)
+                    }
                 }
 
                 return items
