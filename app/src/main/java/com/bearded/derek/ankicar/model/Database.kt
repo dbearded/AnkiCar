@@ -89,6 +89,9 @@ interface CardDao {
     @Query("select * FROM DbCard WHERE flagged = 1 AND date BETWEEN :from AND :to")
     fun getFlaggedBetweenDates(from: Date, to: Date): List<DbCard>
 
+    @Query("select * FROM DbCard WHERE ease IN (:ease) AND date BETWEEN :from AND :to")
+    fun getEaseBetweenDates(from: Date, to: Date, vararg ease: Int): List<DbCard>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(card: DbCard): Long
 

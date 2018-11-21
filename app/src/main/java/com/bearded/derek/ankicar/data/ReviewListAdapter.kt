@@ -10,10 +10,15 @@ import com.bearded.derek.ankicar.R
 import com.bearded.derek.ankicar.model.AnkiDatabase
 import com.bearded.derek.ankicar.model.DbCard
 import com.bearded.derek.ankicar.model.Review
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val items = mutableListOf<Item>()
+
+    val startDateFormat = SimpleDateFormat("MM/dd HH:mm")
+    val endDateFormat = SimpleDateFormat("HH:mm")
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReviewViewHolder {
         when (viewType) {
@@ -39,7 +44,7 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
         when (getItemViewType(position)) {
             Item.TYPE_HEADER -> {
                 val review = (items[position] as Header).review
-                val range: String = review.startDate.toLocaleString() + " - " + review.endDate.toLocaleString()
+                val range: String = startDateFormat.format(review.startDate) + " - " + endDateFormat.format(review.endDate)
                 (holder as HeaderViewHolder).header.text = range
             }
 
@@ -55,12 +60,14 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
         }
     }
 
-    fun refresh() {
+    fun <D>refresh(getDao: AnkiDatabase.() -> D, daoMethod: D.(Date, Date) -> List<DbCard>, transformation:
+    Iterable<DbCard>.() -> List<DbCard>) {
         val task = object : AsyncTask<AnkiDatabase, Void, List<Item>>() {
             override fun doInBackground(vararg params: AnkiDatabase?): List<Item> {
-                val db = params[0]
-                val cardDao = db!!.cardDao()
-                val reviewDao = db!!.reviewDao()
+                val db = params[0] ?: return emptyList()
+//                val cardDao = db!!.cardDao()
+
+                val reviewDao = db.reviewDao()
 
                 val reviewList = reviewDao.getAll()
                 val reviewSorted = reviewList.sortedBy { it.endDate }
@@ -69,9 +76,19 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
                 val items = mutableListOf<Item>()
                 reversed.forEach {
                     items.add(Header(it))
-                    items.addAll(cardDao.getAllBetweenDates(it.startDate, it.endDate).map {
+//                    items.addAll(cardDao.getAllBetweenDates(it.startDate, it.endDate).reversed().map {
+//                        Card(it)
+//                    })
+//                    val dao = db.getDao()
+//                    val results = dao.daoMethod(it.startDate, it.endDate)
+//                    val transformed = results.transformation()
+
+                    items.addAll(db.getDao().daoMethod(it.startDate, it.endDate).transformation().map {
                         Card(it)
                     })
+//                    items.addAll(dao.daoMethod(it.startDate, it.endDate).reversed().map {
+//                        Card(it)
+//                    })
                 }
 
                 return items
@@ -89,7 +106,7 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
         task.execute(db)
     }
 
-    inner open class ReviewViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    open inner class ReviewViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     inner class HeaderViewHolder(itemView: View) : ReviewViewHolder(itemView) {
         val header: TextView = itemView.findViewById(R.id.review_header)

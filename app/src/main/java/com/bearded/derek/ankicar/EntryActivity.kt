@@ -3,11 +3,14 @@ package com.bearded.derek.ankicar
 import android.content.Intent
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentManager
+import android.support.v4.app.FragmentStatePagerAdapter
+import android.support.v4.view.ViewPager
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-
 import kotlinx.android.synthetic.main.activity_entry_activity.*
 
 class EntryActivity : BaseActivity() {
@@ -18,33 +21,22 @@ class EntryActivity : BaseActivity() {
 
     }
 
+    private lateinit var pager: ViewPager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_entry_activity)
         setSupportActionBar(toolbar)
+
 
         fab.setOnClickListener { view ->
             val intent = Intent(this@EntryActivity, ReviewActivity::class.java)
             startActivityForResult(intent, REQUEST_REVIEW)
         }
 
-        if (supportFragmentManager.findFragmentById(R.id.card_list) == null) {
-            with(supportFragmentManager.beginTransaction()) {
-                add(R.id.card_list, EntryActivityFragment(), "ReviewListFragment")
-                commit()
-            }
-        }
+        pager = findViewById(R.id.pager)
+        pager.adapter = ScreenSliderPagerAdapter(supportFragmentManager)
 
-    }
-
-    // Not working yet
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == EntryActivity.REQUEST_REVIEW) {
-            val fragment = supportFragmentManager.findFragmentById(R.id.card_list) as EntryActivityFragment?
-            fragment?.adapter?.notifyDataSetChanged()
-        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -70,6 +62,32 @@ class EntryActivity : BaseActivity() {
             }
 
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onBackPressed() {
+        if (pager.currentItem == 0) {
+            super.onBackPressed()
+        } else {
+            pager.currentItem = pager.currentItem - 1
+        }
+    }
+
+    private inner class ScreenSliderPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
+        override fun getItem(position: Int): Fragment {
+            return when (position) {
+                0 -> ReviewListFragment()
+                1 -> ReviewListDifficultCardsFragment()
+                else -> ReviewListFlaggedCardsFragment()
+            }
+        }
+
+        override fun getCount(): Int = 3
+
+        override fun getPageTitle(position: Int): CharSequence? = when (position) {
+            0 -> "Reviewed"
+            1 -> "Difficult"
+            else -> "Flagged"
         }
     }
 }
