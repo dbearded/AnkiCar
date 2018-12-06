@@ -7,7 +7,6 @@ import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,13 +16,14 @@ import com.bearded.derek.ankicar.model.Review;
 import com.bearded.derek.ankicar.model.anki.Card;
 import com.bearded.derek.ankicar.data.ReviewAdapter;
 import com.bearded.derek.ankicar.model.AnkiDatabase;
+import com.bearded.derek.ankicar.utils.Logger;
 import com.bearded.derek.ankicar.view.ReviewGestureListener;
 import com.ichi2.anki.FlashCardsContract;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import kotlin.Pair;
@@ -38,6 +38,7 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
     private boolean isQuestion; // !isQuestion == isAnswer always
 
     private Date startTime;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yy-HH:mm:ss");
 
     @Override
     protected void onPause() {
@@ -58,6 +59,7 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
         super.onResume();
 
         startTime = new Date(System.currentTimeMillis());
+        Logger.Companion.setFilename("AnkiCar" + dateFormat.format(startTime));
     }
 
     private TextView questionTextView, answerTextView;
@@ -92,7 +94,7 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
                     isTtsInitComplete = true;
                     if (!shouldRequestPermission(FlashCardsContract.READ_WRITE_PERMISSION)) {
                         reviewAdapter.init(null);
-                      }
+                    }
                 }
             }
         });

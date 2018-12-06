@@ -5,10 +5,12 @@ import android.content.ContentValues
 import android.net.Uri
 import android.os.AsyncTask
 import android.text.TextUtils
+import android.util.Log
 import com.ichi2.anki.FlashCardsContract
 import java.lang.ref.WeakReference
 import com.bearded.derek.ankicar.model.anki.AnkiReviewCard.*
 import com.bearded.derek.ankicar.model.anki.Card.Companion.build
+import com.bearded.derek.ankicar.utils.Logger
 
 interface CardCompletionListener {
     fun onQueryComplete(cards: List<Card>)
@@ -16,12 +18,19 @@ interface CardCompletionListener {
 }
 
 fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver, callback: CardCompletionListener) {
+    Logger.log("AnkiTasks: queryForReviewCards entered - limit: $limit")
     val querySchedule = QueryAnkiSchedule(deckId, limit, object : QueryAnkiSchedule.OnCompletionListener {
         override fun onComplete(reviewInfo: List<AnkiCardForReview>) {
+            Logger.log("AnkiTasks: QueryAnkiSchedule.onComplete entered - ankiCardForReview size: ${reviewInfo
+                    .size}")
             val querySpecificCards = QueryAnkiSpecificSimpleCards(reviewInfo, object : QueryAnkiSpecificSimpleCards.OnCompletionListener {
                 override fun onComplete(reviewInfo: List<AnkiCard>) {
+                    Logger.log("AnkiTasks: QueryAnkiSpecificSimpleCards.onComplete entered - ankiCard size: " +
+                            "${reviewInfo.size}")
                     val queryAnkyModels = QueryAnkiModels(reviewInfo, object : QueryAnkiModels.OnCompletionListener {
                         override fun onComplete(reviewInfo: List<AnkiCard>) {
+                            Logger.log("AnkiTasks: QueryAnkiModels.onComplete entered - ankiCard size: " +
+                                    "${reviewInfo.size}")
                             val cards = mutableListOf<Card>()
                             reviewInfo.forEach {
                                 cards += it.build(it.getCleanser())
@@ -40,8 +49,10 @@ fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver,
 }
 
 fun updateAnki(reviewedCard: AnkiCardReviewed, contentResolver: ContentResolver, callback: CardCompletionListener) {
+    Logger.log("AnkiTasks: updateAnki entered - reviewedCard: ${reviewedCard.noteId}")
     val updateSchedule = UpdateAnkiSchedule(reviewedCard, object : UpdateAnkiSchedule.OnCompletionListener {
         override fun onComplete(numUpdated: Int) {
+            Logger.log("AnkiTasks: UpdateAnkiSchedule.onComplete entered - numUpdated: $numUpdated")
             callback.onUpdateComplete(numUpdated)
         }
     })
