@@ -38,7 +38,7 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
     private boolean isQuestion; // !isQuestion == isAnswer always
 
     private Date startTime;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yy-HH:mm:ss");
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yy-HH_mm_ss");
 
     @Override
     protected void onPause() {

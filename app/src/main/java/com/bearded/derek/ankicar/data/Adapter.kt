@@ -29,8 +29,10 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
             }
             Logger.log("Adapter: onQueryComplete unhandled cards size: ${unhandledCards.size}")
             val querySize = reviewQueue.size
+            val distinct = reviewQueue.asSequence().minus(getCacheCards()).minus(skipList).minus(unhandledCards).toList()
+            Logger.log("Adapter: onQueryComplete distinct cards size: ${distinct.size}")
             // Only unhandled cards and only if the query keeps returning new cards
-            if (unhandledCards.size == reviewQueue.size && prevLimit == querySize) {
+            if (distinct.isEmpty() && prevLimit == querySize) {
                 queryForCards()
             } else {
                 next()
@@ -40,7 +42,9 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
         override fun onUpdateComplete(numUpdated: Int) {
             Logger.log("Adapter: onUpdateComplete entered - updated count: $numUpdated")
             requestInFlight = false
-            queryForCards()
+            if (!flushing) {
+                queryForCards()
+            }
         }
     }
 
@@ -57,6 +61,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     private val skipList = mutableListOf<Card>()
     private var unhandledCards = listOf<Card>()
     private var flagged = false
+    private var flushing = false
 
     private lateinit var reviewQueue: List<Card>
 
@@ -109,6 +114,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
 
     fun flush() {
         Logger.log("Adapter: flush entered - postReviewCache size: ${postReviewCache.size}")
+        flushing = true
         cacheLimit = 0
         while (postReviewCache.size > 0) {
             handleOverflow()
@@ -194,7 +200,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
 
     private fun next() {
         Logger.log("Adapter: next entered")
-        val distinct = reviewQueue.minus(getCacheCards()).minus(skipList).minus(unhandledCards)
+        val distinct = reviewQueue.asSequence().minus(getCacheCards()).minus(skipList).minus(unhandledCards).toList()
         if (distinct.isNotEmpty()) {
             Logger.log("Adapter: next - distinct size: ${distinct.size}")
             currentCard = distinct.first()
