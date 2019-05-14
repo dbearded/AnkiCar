@@ -3,19 +3,19 @@ package com.bearded.derek.ankicar;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
-import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
-import com.bearded.derek.ankicar.model.Review;
-import com.bearded.derek.ankicar.model.anki.Card;
 import com.bearded.derek.ankicar.data.ReviewAdapter;
 import com.bearded.derek.ankicar.model.AnkiDatabase;
+import com.bearded.derek.ankicar.model.Review;
+import com.bearded.derek.ankicar.model.anki.Card;
 import com.bearded.derek.ankicar.utils.Logger;
 import com.bearded.derek.ankicar.view.ReviewGestureListener;
 import com.ichi2.anki.FlashCardsContract;
@@ -34,10 +34,13 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
     private static final int REQUEST_PERMISSION_FLASHCARD = 2000;
 
     private boolean isTtsInitComplete;
+
     private boolean isCardAdapterInit;
+
     private boolean isQuestion; // !isQuestion == isAnswer always
 
     private Date startTime;
+
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yy-HH_mm_ss");
 
     @Override
@@ -63,10 +66,15 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
     }
 
     private TextView questionTextView, answerTextView;
+
     private ReviewAdapter reviewAdapter;
+
     private GestureDetectorCompat gestureDetector;
+
     private ReviewGestureListener gestureListener;
+
     private TextToSpeech textToSpeech;
+
     private Card currentCard;
 
     @Override

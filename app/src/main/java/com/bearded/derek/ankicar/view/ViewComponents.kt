@@ -65,7 +65,7 @@ class ReviewGestureListener(val callback: ReviewGestureCallback) : GestureDetect
     }
 
     private fun findClosestAxis(direction: Pair<Float, Float>): Pair<String, Double> {
-        return listOf<Pair<String, Double>>(
+        return listOf(
                 Pair(SWIPE_UP, cosineSimilarity(direction.first, direction.second, posYVect.first, posYVect.second)),
                 Pair(SWIPE_DOWN, cosineSimilarity(direction.first, direction.second, negYVect.first, negYVect.second)),
                 Pair(SWIPE_RIGHT, cosineSimilarity(direction.first, direction.second, posXVect.first, posXVect.second)),

@@ -16,9 +16,7 @@ import kotlinx.android.synthetic.main.activity_entry_activity.*
 class EntryActivity : BaseActivity() {
 
     companion object {
-
         val REQUEST_REVIEW = 1
-
     }
 
     private lateinit var pager: ViewPager

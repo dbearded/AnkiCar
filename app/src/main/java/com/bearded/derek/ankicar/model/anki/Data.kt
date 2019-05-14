@@ -6,23 +6,28 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 
 sealed class AnkiReviewCard {
-    class AnkiCardForReview(val noteId: Long, val cardOrd: Int, val buttonCount: Int, val nextReviewTimes: String,
-                            val media: Boolean)
+    class AnkiCardForReview(
+        val noteId: Long, val cardOrd: Int, val buttonCount: Int, val nextReviewTimes: String,
+        val media: Boolean
+    )
+
     class AnkiCardReviewed(val noteId: Long, val cardOrd: Int, val ease: Int, val timeTaken: Long)
 }
 
-data class AnkiCard(val noteId: Long,
-                    var modelId: Long,
-                    val cardOrd: Int,
-                    val cardName: String,
-                    val did: String,
-                    val question: String,
-                    val answer: String,
-                    val questionSimple: String,
-                    val answerSimple: String,
-                    val answerPure: String,
-                    val media: Boolean,
-                    val buttonCount: Int)
+data class AnkiCard(
+    val noteId: Long,
+    var modelId: Long,
+    val cardOrd: Int,
+    val cardName: String,
+    val did: String,
+    val question: String,
+    val answer: String,
+    val questionSimple: String,
+    val answerSimple: String,
+    val answerPure: String,
+    val media: Boolean,
+    val buttonCount: Int
+)
 
 object Deck {
     const val ID_DEVELOPER = 1L
@@ -30,13 +35,16 @@ object Deck {
 }
 
 data class QAPair(val question: String, val answer: String)
+
 const val MASKED_FIELD_QUESTION = "blank"
 const val NBSP = "&nbsp;"
 const val UNHANDLED = "[unhandled]"
+
 interface ModelCleanser {
     fun cleanse(ankiCard: AnkiCard): QAPair
 
 }
+
 fun AnkiCard.getCleanser() = when {
     (modelId == ClozeStatementCleanser.MODEL_ID) -> ClozeStatementCleanser
     (modelId == ClozeOverlappingCleanser.MODEL_ID) -> ClozeOverlappingCleanser
@@ -94,7 +102,7 @@ object ClozeOverlappingCleanser : ModelCleanser {
 
     fun getItems(side: String, doc: Document): Elements {
         return doc.getElementsByClass(side).first().selectFirst("[class='text']").children()
-                .select("div:not([class='hidden'], [class='hidden'] *)")
+            .select("div:not([class='hidden'], [class='hidden'] *)")
     }
 
     fun titleToString(title: Element): String {
@@ -131,19 +139,23 @@ object ProblemCleanser : ModelCleanser {
 
 }
 
-data class Card private constructor(val noteId: Long,
-                                    val cardOrd: Int,
-                                    val buttonCount: Int,
-                                    val question: String,
-                                    val answer: String) {
+data class Card private constructor(
+    val noteId: Long,
+    val cardOrd: Int,
+    val buttonCount: Int,
+    val question: String,
+    val answer: String) {
+
     companion object {
         fun AnkiCard.build(cleanser: ModelCleanser): Card {
             val qaPair = cleanser.cleanse(this)
-            return Card(noteId,
-                    cardOrd,
-                    buttonCount,
-                    qaPair.question,
-                    qaPair.answer)
+            return Card(
+                noteId,
+                cardOrd,
+                buttonCount,
+                qaPair.question,
+                qaPair.answer
+            )
         }
     }
 }
