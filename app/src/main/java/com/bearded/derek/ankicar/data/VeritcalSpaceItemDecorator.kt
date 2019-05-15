@@ -1,8 +1,8 @@
 package com.bearded.derek.ankicar.data
 
 import android.graphics.Rect
-import android.support.v7.widget.RecyclerView
 import android.view.View
+import androidx.recyclerview.widget.RecyclerView
 import com.bearded.derek.ankicar.utils.dpToPx
 
 class VerticalSpaceItemDecorator(val offset: Rect) : RecyclerView.ItemDecoration() {
@@ -20,10 +20,10 @@ class VerticalSpaceItemDecorator(val offset: Rect) : RecyclerView.ItemDecoration
         }
     }
 
-    override fun getItemOffsets(outRect: Rect?, view: View?, parent: RecyclerView?, state: RecyclerView.State?) {
-        outRect?.left = offset.left
-        outRect?.top = offset.top
-        outRect?.right = offset.right
-        outRect?.bottom = offset.bottom
+    override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+        outRect.left = offset.left
+        outRect.top = offset.top
+        outRect.right = offset.right
+        outRect.bottom = offset.bottom
     }
 }

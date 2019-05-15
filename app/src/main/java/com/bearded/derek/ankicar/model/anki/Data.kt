@@ -7,8 +7,11 @@ import org.jsoup.select.Elements
 
 sealed class AnkiReviewCard {
     class AnkiCardForReview(
-        val noteId: Long, val cardOrd: Int, val buttonCount: Int, val nextReviewTimes: String,
-        val media: Boolean
+        val noteId: Long,
+        val cardOrd: Int,
+        val buttonCount: Int,
+        val nextReviewTimes: String,
+        val isMedia: Boolean
     )
 
     class AnkiCardReviewed(val noteId: Long, val cardOrd: Int, val ease: Int, val timeTaken: Long)

@@ -1,9 +1,9 @@
 package com.bearded.derek.ankicar.model
 
-import android.arch.persistence.db.SimpleSQLiteQuery
-import android.arch.persistence.room.*
 import android.content.Context
 import android.os.AsyncTask
+import androidx.room.*
+import androidx.sqlite.db.SimpleSQLiteQuery
 import java.lang.ref.WeakReference
 import java.util.*
 
