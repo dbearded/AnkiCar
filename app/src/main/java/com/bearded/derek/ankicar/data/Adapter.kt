@@ -20,6 +20,10 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
 
     var deckId: Long = -1L
 
+    private val job = Job()
+    private val ioScope = CoroutineScope(Dispatchers.Main)
+
+
     private val ankiTaskCompletionListener = object : CardCompletionListener {
         override fun onQueryComplete(cards: List<Card>) {
             Logger.log("Adapter: onQueryComplete entered - card List size: ${cards.size}")
@@ -178,7 +182,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
                 mapToAnkiEase(review), System.currentTimeMillis() - review.timeTaken)
 
 //        updateAnki(reviewedCard, contentResolver, ankiTaskCompletionListener)
-            val numUpdated = async { updateAnki2(reviewedCard, contentResolver) }.await()
+            val numUpdated = withContext(Dispatchers.IO) { updateAnki(reviewedCard, contentResolver) }
             ankiTaskCompletionListener.onUpdateComplete(numUpdated)
         }
     }
@@ -202,7 +206,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
                 requestInFlight = true
                 val limit = postReviewCache.size + skipList.size + unhandledCards.size +  1
 //            queryReviewCards(deckId, limit, contentResolver, ankiTaskCompletionListener)
-                val cards = withContext(Dispatchers.Default) { queryReviewCards2(deckId, limit, contentResolver) }
+                val cards = withContext(Dispatchers.IO) { queryReviewCards(deckId, limit, contentResolver) }
                 ankiTaskCompletionListener.onQueryComplete(cards)
             }
         }

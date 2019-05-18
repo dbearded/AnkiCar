@@ -3,14 +3,13 @@ package com.bearded.derek.ankicar.model.anki
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.net.Uri
-import android.os.AsyncTask
-import android.text.TextUtils
-import android.util.Log
 import com.bearded.derek.ankicar.model.anki.AnkiReviewCard.AnkiCardForReview
 import com.bearded.derek.ankicar.model.anki.AnkiReviewCard.AnkiCardReviewed
 import com.bearded.derek.ankicar.model.anki.Card.Companion.build
 import com.bearded.derek.ankicar.utils.Logger
 import com.ichi2.anki.FlashCardsContract
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 interface CardCompletionListener {
     fun onQueryComplete(cards: List<Card>)
@@ -19,7 +18,7 @@ interface CardCompletionListener {
 
 const val EMPTY_MEDIA: String = "[]"
 
-suspend fun queryReviewCards2(deckId: Long, limit: Int, contentResolver: ContentResolver): List<Card> {
+suspend fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver): List<Card> {
     Logger.log("AnkiTasks: queryForReviewCards2 entered - limit: $limit")
     val reviewInfo = queryAnkiSchedule(deckId, limit, contentResolver)
 
@@ -34,8 +33,8 @@ suspend fun queryReviewCards2(deckId: Long, limit: Int, contentResolver: Content
     }
 }
 
-suspend fun updateAnki2(reviewedCard: AnkiCardReviewed, contentResolver: ContentResolver): Int {
-    Logger.log("AnkiTasks: updateAnki2 entered - reviewedCard: ${reviewedCard.noteId}")
+suspend fun updateAnki(reviewedCard: AnkiCardReviewed, contentResolver: ContentResolver): Int {
+    Logger.log("AnkiTasks: updateAnki entered - reviewedCard: ${reviewedCard.noteId}")
     return updateAnkiSchedule(reviewedCard, contentResolver)
 }
 
@@ -56,23 +55,25 @@ suspend fun queryAnkiSchedule(deckId: Long, limit: Int, contentResolver: Content
         else -> arrayOf(limit.toString(), deckId.toString())
     }
 
-    contentResolver.query(scheduledCardsUri, null, deckSelector, deckArguments, null)
-        ?.use {
-            while (it.moveToNext()) {
-                reviewInfos += AnkiCardForReview(
-                    noteId = it.getLong(0),
-                    cardOrd = it.getInt(1),
-                    buttonCount = it.getInt(2),
-                    nextReviewTimes = it.getString(3),
-                    isMedia = it.getString(4) != EMPTY_MEDIA
-                )
+    withContext(Dispatchers.IO) {
+        contentResolver.query(scheduledCardsUri, null, deckSelector, deckArguments, null)
+            ?.use {
+                while (it.moveToNext()) {
+                    reviewInfos += AnkiCardForReview(
+                        noteId = it.getLong(0),
+                        cardOrd = it.getInt(1),
+                        buttonCount = it.getInt(2),
+                        nextReviewTimes = it.getString(3),
+                        isMedia = it.getString(4) != EMPTY_MEDIA
+                    )
+                }
             }
-        }
+    }
 
     return reviewInfos
 }
 
-suspend fun updateAnkiSchedule(reviewedCard: AnkiCardReviewed, contentResolver: ContentResolver): Int {
+fun updateAnkiSchedule(reviewedCard: AnkiCardReviewed, contentResolver: ContentResolver): Int {
     val scheduledCardsUri: Uri = FlashCardsContract.ReviewInfo.CONTENT_URI
 
     val values = ContentValues()

@@ -28,14 +28,12 @@ object Logger {
 //    }
 
     private fun log2(message: String) {
-        GlobalScope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
             Log.d("AnkiCar", message)
-            withContext(Dispatchers.IO) {
-                File(PATH).mkdirs()
-                with(File("$PATH$filename.txt")) {
-                    if (!exists()) createNewFile()
-                    appendText(message + "\n")
-                }
+            File(PATH).mkdirs()
+            with(File("$PATH$filename.txt")) {
+                if (!exists()) createNewFile()
+                appendText(message + "\n")
             }
         }
     }
@@ -69,14 +67,12 @@ object Logger {
 }
 
 fun log(message: String) {
-    GlobalScope.launch {
+    GlobalScope.launch(Dispatchers.IO) {
         Log.d("AnkiCar", message)
-        withContext(Dispatchers.IO) {
-            File(Logger.PATH).mkdirs()
-            with(File("${Logger.PATH}${Logger.filename}.txt")) {
-                if (!exists()) createNewFile()
-                appendText(message + "\n")
-            }
+        File(Logger.PATH).mkdirs()
+        with(File("${Logger.PATH}${Logger.filename}.txt")) {
+            if (!exists()) createNewFile()
+            appendText(message + "\n")
         }
     }
 }
