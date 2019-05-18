@@ -1,17 +1,20 @@
 package com.bearded.derek.ankicar.data
 
-import android.content.ContentResolver
-import com.bearded.derek.ankicar.model.AnkiDatabase
 import com.bearded.derek.ankicar.model.DbCard
-import com.bearded.derek.ankicar.model.TransactionListener
-import com.bearded.derek.ankicar.model.anki.*
-import com.bearded.derek.ankicar.model.insertCard
+import com.bearded.derek.ankicar.model.Repository
+import com.bearded.derek.ankicar.model.anki.AnkiReviewCard
+import com.bearded.derek.ankicar.model.anki.Card
+import com.bearded.derek.ankicar.model.anki.CardCompletionListener
+import com.bearded.derek.ankicar.model.anki.UNHANDLED
 import com.bearded.derek.ankicar.utils.Logger
+import com.bearded.derek.ankicar.utils.log
 import kotlinx.coroutines.*
 import java.util.*
 
-class ReviewAdapter(private val callback: Callback, private val contentResolver: ContentResolver,
-                    private val ankiDatabase: AnkiDatabase) {
+class ReviewAdapter(
+    private val callback: Callback,
+    private val repo: Repository
+) {
 
     interface Callback {
         fun reviewComplete()
@@ -20,16 +23,12 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
 
     var deckId: Long = -1L
 
-    private val job = Job()
-    private val ioScope = CoroutineScope(Dispatchers.Main)
-
-
     private val ankiTaskCompletionListener = object : CardCompletionListener {
         override fun onQueryComplete(cards: List<Card>) {
             Logger.log("Adapter: onQueryComplete entered - card List size: ${cards.size}")
             requestInFlight = false
             reviewQueue = cards
-            val prevLimit = postReviewCache.size + skipList.size + unhandledCards.size +  1
+            val prevLimit = postReviewCache.size + skipList.size + unhandledCards.size + 1
             unhandledCards = cards.filter {
                 it.question == UNHANDLED
             }
@@ -59,7 +58,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     }
 
     var cacheLimit = 3
-    private  var requestInFlight = false
+    private var requestInFlight = false
     private var readyForInput = true
     private lateinit var currentCard: Card
     private var cardStartTime = -1L
@@ -85,7 +84,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
         Logger.log("Adapter: answer entered - ready for input: $readyForInput - current card id: ${currentCard.noteId}")
         if (readyForInput) {
             readyForInput = false
-            val timeTaken = Math.min(System.currentTimeMillis() - cardStartTime, 60*1000L)
+            val timeTaken = Math.min(System.currentTimeMillis() - cardStartTime, 60 * 1000L)
             addToCache(ReviewAction.ReviewResult(currentCard, ease, timeTaken, flagged))
             queryForCards()
         }
@@ -118,12 +117,27 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
         return skipList.toList()
     }
 
-    fun flush() {
+    fun done() {
+        flush()
+    }
+
+    private fun flush() {
         Logger.log("Adapter: flush entered - postReviewCache size: ${postReviewCache.size}")
         flushing = true
         cacheLimit = 0
-        while (postReviewCache.size > 0) {
-            handleOverflow()
+
+        GlobalScope.launch {
+            val reviews = mutableListOf<AnkiReviewCard.AnkiCardReviewed>()
+            withContext(Dispatchers.Default) {
+                postReviewCache.forEach {
+                    when (it) {
+                        is ReviewAction.ReviewResult -> reviews+= AnkiReviewCard.AnkiCardReviewed(it.card.noteId, it.card.cardOrd,
+                            mapToAnkiEase(it), System.currentTimeMillis() - it.timeTaken)
+                    }
+                }
+            }
+
+            repo.sendReviewToAnki(reviews)
         }
     }
 
@@ -147,49 +161,40 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     private fun persistSkip(skip: ReviewAction.SkipResult) {
         Logger.log("Adapter: persistSkip entered - cardId: ${skip.card.noteId}")
         requestInFlight = true
-        val listener = object : TransactionListener {
-            override fun onComplete() {
-                Logger.log("Adapter: persistSkip TransactionListener onComplete entered - cardId: ${skip.card.noteId}")
-                skipList += skip.card
-            }
-        }
 
-        insertCard(ankiDatabase, listener, DbCard(skip.card.noteId, skip.card.cardOrd, skip.card.buttonCount,
+        GlobalScope.launch {
+            repo.insertCardInDb(DbCard(skip.card.noteId, skip.card.cardOrd, skip.card.buttonCount,
                 skip.card.question, skip.card.answer, skip.flagged, -1, -1, Date(System
                 .currentTimeMillis())))
+
+            Logger.log("Adapter: persistSkip TransactionListener onComplete entered - cardId: ${skip.card.noteId}")
+            skipList += skip.card
+        }
     }
 
     private fun persistReview(review: ReviewAction.ReviewResult) {
         Logger.log("Adapter: persistReview entered - cardId: ${review.card.noteId}")
         requestInFlight = true
-        val listener = object : TransactionListener {
-            override fun onComplete() {
-                Logger.log("Adapter: persistReview TransactionListener onComplete entered - cardId: ${review.card.noteId}")
-                sendReviewToAnki(review)
-            }
-        }
-        
-        insertCard(ankiDatabase, listener, DbCard(review.card.noteId, review.card.cardOrd, review.card.buttonCount,
+
+        GlobalScope.launch {
+            repo.insertCardInDb(DbCard(review.card.noteId, review.card.cardOrd, review.card.buttonCount,
                 review.card.question, review.card.answer, review.flagged, review.ease, review.timeTaken, Date(System
                 .currentTimeMillis())))
-    }
 
-    private fun sendReviewToAnki(review: ReviewAction.ReviewResult) {
-        GlobalScope.launch {
-            Logger.log("Adapter: sendReviewToAnki entered - cardId: ${review.card.noteId}")
+            log("Adapter: sendReviewToAnki entered - cardId: ${review.card.noteId}")
             requestInFlight = true
             val reviewedCard = AnkiReviewCard.AnkiCardReviewed(review.card.noteId, review.card.cardOrd,
                 mapToAnkiEase(review), System.currentTimeMillis() - review.timeTaken)
 
-//        updateAnki(reviewedCard, contentResolver, ankiTaskCompletionListener)
-            val numUpdated = withContext(Dispatchers.IO) { updateAnki(reviewedCard, contentResolver) }
+            val numUpdated = repo.sendReviewToAnki(reviewedCard)
             ankiTaskCompletionListener.onUpdateComplete(numUpdated)
+
         }
     }
 
     private fun mapToAnkiEase(review: ReviewAction.ReviewResult): Int {
         Logger.log("Adapter: mapToAnkiEase entered - cardId: ${review.card.noteId} - cardButtonCount: ${review
-                .card.buttonCount}")
+            .card.buttonCount}")
         if (review.card.buttonCount == 3) {
             if (review.ease > 1) {
                 return review.ease - 1
@@ -201,12 +206,11 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
 
     private fun queryForCards() {
         GlobalScope.launch {
-            Logger.log("Adapter: queryForCards entered - requestInFlight: $requestInFlight")
+            log("Adapter: queryForCards entered - requestInFlight: $requestInFlight")
             if (!requestInFlight) {
                 requestInFlight = true
-                val limit = postReviewCache.size + skipList.size + unhandledCards.size +  1
-//            queryReviewCards(deckId, limit, contentResolver, ankiTaskCompletionListener)
-                val cards = withContext(Dispatchers.IO) { queryReviewCards(deckId, limit, contentResolver) }
+                val limit = postReviewCache.size + skipList.size + unhandledCards.size + 1
+                val cards = repo.queryForCards(deckId, limit)
                 ankiTaskCompletionListener.onQueryComplete(cards)
             }
         }
@@ -261,7 +265,7 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     private fun getCacheCards(): List<Card> {
         Logger.log("Adapter: getCacheCards entered - postReviewCache size: ${postReviewCache.size}")
         return postReviewCache.map {
-            when(it) {
+            when (it) {
                 is ReviewAction.ReviewResult -> it.card
                 is ReviewAction.SkipResult -> it.card
             }
@@ -276,9 +280,10 @@ class ReviewAdapter(private val callback: Callback, private val contentResolver:
     }
 
     private sealed class ReviewAction {
-        class ReviewResult(val card: Card, val ease: Int, val timeTaken: Long, var flagged: Boolean = false):
-                ReviewAction()
-        class SkipResult(val card: Card, var flagged: Boolean = false): ReviewAction()
+        class ReviewResult(val card: Card, val ease: Int, val timeTaken: Long, var flagged: Boolean = false) :
+            ReviewAction()
+
+        class SkipResult(val card: Card, var flagged: Boolean = false) : ReviewAction()
     }
 
     private fun ReviewAction.getCard(): Card {

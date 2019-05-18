@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.bearded.derek.ankicar.data.ReviewAdapter;
 import com.bearded.derek.ankicar.model.AnkiDatabase;
+import com.bearded.derek.ankicar.model.Repository;
 import com.bearded.derek.ankicar.model.Review;
 import com.bearded.derek.ankicar.model.anki.Card;
 import com.bearded.derek.ankicar.utils.Logger;
@@ -91,8 +92,11 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
         gestureListener = new ReviewGestureListener(this);
         gestureDetector = new GestureDetectorCompat(this, gestureListener);
 
-        reviewAdapter = new ReviewAdapter(ReviewActivity.this, getContentResolver(), AnkiDatabase.Companion
-            .getInstance(getApplicationContext()));
+        Repository repository = new Repository(
+            AnkiDatabase.Companion.getInstance(getApplicationContext()),
+            getContentResolver());
+
+        reviewAdapter = new ReviewAdapter(ReviewActivity.this, repository);
 
         textToSpeech = new TextToSpeech(ReviewActivity.this, new TextToSpeech.OnInitListener() {
             @Override
@@ -135,7 +139,7 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
 
     @Override
     protected void onDestroy() {
-        reviewAdapter.flush();
+        reviewAdapter.done();
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
