@@ -96,7 +96,7 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
             AnkiDatabase.Companion.getInstance(getApplicationContext()),
             getContentResolver());
 
-        reviewAdapter = new ReviewAdapter(ReviewActivity.this, repository);
+        reviewAdapter = new ReviewAdapter(ReviewActivity.this, repository, 3);
 
         textToSpeech = new TextToSpeech(ReviewActivity.this, new TextToSpeech.OnInitListener() {
             @Override
