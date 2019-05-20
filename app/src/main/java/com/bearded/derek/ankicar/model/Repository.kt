@@ -15,12 +15,12 @@ class Repository(
 ) {
 
     suspend fun queryForCards(deckId: Long, limit: Int): List<Card> {
-        log("Adapter: queryForCards entered")
+        log("Repository: queryForCards entered")
         return withContext(Dispatchers.IO) { queryReviewCards(deckId, limit, contentResolver) }
     }
 
     suspend fun sendReviewToAnki(reviewedCard: AnkiReviewCard.AnkiCardReviewed): Int {
-        log("Adapter: sendReviewToAnki entered - cardId: ${reviewedCard.noteId}")
+        log("Repository: sendReviewToAnki entered - cardId: ${reviewedCard.noteId}")
         return withContext(Dispatchers.IO) { updateAnki(reviewedCard, contentResolver) }
     }
 

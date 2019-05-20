@@ -1,11 +1,11 @@
 package com.bearded.derek.ankicar.data
 
 import android.os.AsyncTask
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import com.bearded.derek.ankicar.R
 import com.bearded.derek.ankicar.model.AnkiDatabase
 import com.bearded.derek.ankicar.model.DbCard
@@ -21,14 +21,15 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
     val endDateFormat = SimpleDateFormat("HH:mm")
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReviewViewHolder {
-        when (viewType) {
-            Item.TYPE_HEADER -> {
-                return HeaderViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.header_item, parent, false))
+
+        return when (viewType) {
+            Item.Header.ORD -> {
+                HeaderViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.header_item, parent, false))
             }
-            Item.TYPE_CARD -> {
-                return CardViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_item, parent, false))
+            Item.Card.ORD -> {
+                CardViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_item, parent, false))
             }
-            else -> return ReviewViewHolder(parent) // Unreachable - here to satisfy Kotlin
+            else -> ReviewViewHolder(parent) // Unreachable - here to satisfy Kotlin
         }
     }
 
@@ -37,20 +38,20 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
     }
 
     override fun getItemViewType(position: Int): Int {
-        return items[position].getType()
+        return items[position].ordinal()
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (getItemViewType(position)) {
-            Item.TYPE_HEADER -> {
-                val review = (items[position] as Header).review
+            Item.Header.ORD -> {
+                val review = (items[position] as Item.Header).review
                 val range: String = startDateFormat.format(review.startDate) + " - " + endDateFormat.format(review.endDate)
                 (holder as HeaderViewHolder).header.text = range
             }
 
-            Item.TYPE_CARD -> {
+            Item.Card.ORD -> {
                 val cardHolder = holder as CardViewHolder
-                with((items[position] as Card).card) {
+                with((items[position] as Item.Card).card) {
                     cardHolder.question.text = question
                     cardHolder.answer.text = answer
                     cardHolder.cardOrd.text = cardOrd.toString()
@@ -60,7 +61,7 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
         }
     }
 
-    fun <D>refresh(getDao: AnkiDatabase.() -> D, daoMethod: D.(Date, Date) -> List<DbCard>, transformation:
+    fun <D> refresh(getDao: AnkiDatabase.() -> D, daoMethod: D.(Date, Date) -> List<DbCard>, transformation:
     Iterable<DbCard>.() -> List<DbCard>) {
         val task = object : AsyncTask<AnkiDatabase, Void, List<Item>>() {
             override fun doInBackground(vararg params: AnkiDatabase?): List<Item> {
@@ -75,10 +76,10 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
                 val items = mutableListOf<Item>()
                 reversed.forEach {
                     val cards = db.getDao().daoMethod(it.startDate, it.endDate).transformation().map {
-                        Card(it)
+                        Item.Card(it)
                     }
                     if (cards.isNotEmpty()) {
-                        items.add(Header(it))
+                        items.add(Item.Header(it))
                         items.addAll(cards)
                     }
                 }
@@ -98,37 +99,55 @@ class ReviewListAdapter(private val db: AnkiDatabase) : RecyclerView.Adapter<Rec
         task.execute(db)
     }
 
+//    fun refreshCards() {
+//        val task = object : AsyncTask<AnkiDatabase, Void, List<Card>>() {
+//            override fun doInBackground(vararg params: AnkiDatabase?): List<Card> {
+//                val db = params[0] ?: return emptyList()
+//                return db.cardDao().getAll().sortedByDescending { it.date }.map { Card(it) }
+//            }
+//
+//            override fun onPostExecute(result: List<Card>?) {
+//                items.clear()
+//                result?.forEach {
+//                    items.add(Header(Review(it.card.date, it.card.date)))
+//                    items.add(it)
+//                }
+//                notifyDataSetChanged()
+//            }
+//        }
+//
+//        task.execute(db)
+//    }
+
     open inner class ReviewViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     inner class HeaderViewHolder(itemView: View) : ReviewViewHolder(itemView) {
         val header: TextView = itemView.findViewById(R.id.review_header)
     }
 
-    inner class CardViewHolder(itemView: View): ReviewViewHolder(itemView) {
+    inner class CardViewHolder(itemView: View) : ReviewViewHolder(itemView) {
         val question: TextView = itemView.findViewById(R.id.question)
         val answer: TextView = itemView.findViewById(R.id.answer)
         val cardOrd: TextView = itemView.findViewById(R.id.card_num)
         val ease: TextView = itemView.findViewById(R.id.ease)
     }
 
-    abstract class Item() {
-        companion object {
-            val TYPE_HEADER = 0
-            val TYPE_CARD = 1
+    sealed class Item {
+        class Header(val review: Review) : Item() {
+            companion object {
+                const val ORD: Int = 0
+            }
         }
 
-        abstract fun getType() : Int
+        class Card(val card: DbCard) : Item() {
+            companion object {
+                const val ORD: Int = 1
+            }
+        }
     }
 
-    class Header(val review: Review) : Item() {
-        override fun getType(): Int {
-            return TYPE_HEADER
-        }
-    }
-
-    class Card(val card: DbCard) : Item() {
-        override fun getType(): Int {
-            return TYPE_CARD
-        }
+    private fun Item.ordinal() = when (this) {
+        is Item.Header -> Item.Header.ORD
+        is Item.Card -> Item.Card.ORD
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.AsyncTask
 import androidx.room.*
 import androidx.sqlite.db.SimpleSQLiteQuery
+import com.bearded.derek.ankicar.utils.log
 import java.lang.ref.WeakReference
 import java.util.*
 
@@ -20,8 +21,7 @@ abstract class AnkiDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): AnkiDatabase? {
             return INSTANCE ?: synchronized(this) {
-                INSTANCE
-                        ?: buildDatabase(context).also { INSTANCE = it }
+                INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
             }
         }
 

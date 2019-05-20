@@ -4,6 +4,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -12,7 +13,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
+import com.bearded.derek.ankicar.data.CardProvider;
+import com.bearded.derek.ankicar.data.DefaultCardProvider;
+import com.bearded.derek.ankicar.data.LocalPersistanceReviewTracker;
 import com.bearded.derek.ankicar.data.ReviewAdapter;
+import com.bearded.derek.ankicar.data.ReviewTracker;
 import com.bearded.derek.ankicar.model.AnkiDatabase;
 import com.bearded.derek.ankicar.model.Repository;
 import com.bearded.derek.ankicar.model.Review;
@@ -46,15 +51,21 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
 
     @Override
     protected void onPause() {
-        AsyncTask<AnkiDatabase, Void, Void> task = new AsyncTask<AnkiDatabase, Void, Void>() {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
-            protected Void doInBackground(AnkiDatabase... ankiDatabases) {
-                AnkiDatabase db = ankiDatabases[0];
-                db.reviewDao().insert(new Review(startTime, new Date(System.currentTimeMillis())));
-                return null;
+            public void run() {
+                AsyncTask<AnkiDatabase, Void, Void> task = new AsyncTask<AnkiDatabase, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(AnkiDatabase... ankiDatabases) {
+                        AnkiDatabase db = ankiDatabases[0];
+                        db.reviewDao().insert(new Review(startTime, new Date(System.currentTimeMillis())));
+                        return null;
+                    }
+                };
+                task.execute(AnkiDatabase.Companion.getInstance(getApplicationContext()));
             }
-        };
-        task.execute(AnkiDatabase.Companion.getInstance(this));
+        }, 1000);
         super.onPause();
     }
 
@@ -96,7 +107,11 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
             AnkiDatabase.Companion.getInstance(getApplicationContext()),
             getContentResolver());
 
-        reviewAdapter = new ReviewAdapter(ReviewActivity.this, repository, 3);
+        CardProvider provider = new DefaultCardProvider(repository, 3, -1L);
+        ReviewTracker localPersistance = new LocalPersistanceReviewTracker(repository, 3);
+        reviewAdapter = new ReviewAdapter(ReviewActivity.this, provider);
+        reviewAdapter.register(localPersistance);
+
 
         textToSpeech = new TextToSpeech(ReviewActivity.this, new TextToSpeech.OnInitListener() {
             @Override
@@ -105,7 +120,7 @@ public class ReviewActivity extends BaseActivity implements ReviewGestureListene
                     textToSpeech.setLanguage(Locale.US);
                     isTtsInitComplete = true;
                     if (!shouldRequestPermission(FlashCardsContract.READ_WRITE_PERMISSION)) {
-                        reviewAdapter.init(null);
+                        reviewAdapter.start();
                     }
                 }
             }

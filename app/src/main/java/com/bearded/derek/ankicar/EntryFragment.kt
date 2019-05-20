@@ -44,6 +44,30 @@ class ReviewListFragment : Fragment() {
     }
 }
 
+//class CardsFragment : Fragment() {
+//    lateinit var adapter: ReviewListAdapter
+//    lateinit var recyclerView: RecyclerView
+//
+//    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+//                              savedInstanceState: Bundle?): View? {
+//        return inflater.inflate(R.layout.fragment_entry_activity, container, false)
+//    }
+//
+//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+//        super.onViewCreated(view, savedInstanceState)
+//
+//        val db = AnkiDatabase.getInstance(activity!!.applicationContext)
+//        adapter = ReviewListAdapter(db!!)
+//        recyclerView = view.findViewById(R.id.recycler_view)
+//        recyclerView.addItemDecoration(VerticalSpaceItemDecorator.buildDecorator(16, 16, 16, 0,
+//            activity!!.resources.displayMetrics.density))
+//        recyclerView.adapter = adapter
+//        recyclerView.layoutManager = LinearLayoutManager(activity)
+//
+//        adapter.refreshCards()
+//    }
+//}
+
 class ReviewListDifficultCardsFragment : Fragment() {
     lateinit var adapter: ReviewListAdapter
     lateinit var recyclerView: RecyclerView

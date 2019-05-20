@@ -74,6 +74,7 @@ class EntryActivity : BaseActivity() {
     private inner class ScreenSliderPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
         override fun getItem(position: Int): Fragment {
             return when (position) {
+//                0 -> CardsFragment()
                 0 -> ReviewListFragment()
                 1 -> ReviewListDifficultCardsFragment()
                 else -> ReviewListFlaggedCardsFragment()
@@ -83,6 +84,7 @@ class EntryActivity : BaseActivity() {
         override fun getCount(): Int = 3
 
         override fun getPageTitle(position: Int): CharSequence? = when (position) {
+//            0 -> "Cards"
             0 -> "Reviewed"
             1 -> "Difficult"
             else -> "Flagged"

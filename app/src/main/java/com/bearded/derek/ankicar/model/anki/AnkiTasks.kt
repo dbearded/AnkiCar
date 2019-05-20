@@ -7,6 +7,7 @@ import com.bearded.derek.ankicar.model.anki.AnkiReviewCard.AnkiCardForReview
 import com.bearded.derek.ankicar.model.anki.AnkiReviewCard.AnkiCardReviewed
 import com.bearded.derek.ankicar.model.anki.Card.Companion.build
 import com.bearded.derek.ankicar.utils.Logger
+import com.bearded.derek.ankicar.utils.log
 import com.ichi2.anki.FlashCardsContract
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,13 +20,13 @@ interface CardCompletionListener {
 const val EMPTY_MEDIA: String = "[]"
 
 suspend fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentResolver): List<Card> {
-    Logger.log("AnkiTasks: queryForReviewCards2 entered - limit: $limit")
+    log("AnkiTasks: queryForReviewCards2 entered - limit: $limit")
     val reviewInfo = queryAnkiSchedule(deckId, limit, contentResolver)
 
-    Logger.log("AnkiTasks: queryAnkiSchedule - ankiCardForReview size: ${reviewInfo.size}")
+    log("AnkiTasks: queryAnkiSchedule - ankiCardForReview size: ${reviewInfo.size}")
     val ankiCards = queryAnkiSpecificSimpleCards(reviewInfo, contentResolver)
 
-    Logger.log("AnkiTasks: queryAnkiSpecificSimpleCards entered - ankiCard size: ${ankiCards.size}")
+    log("AnkiTasks: queryAnkiSpecificSimpleCards entered - ankiCard size: ${ankiCards.size}")
     queryAnkiModels(ankiCards, contentResolver)
 
     return ankiCards.map {
@@ -34,12 +35,12 @@ suspend fun queryReviewCards(deckId: Long, limit: Int, contentResolver: ContentR
 }
 
 suspend fun updateAnki(reviewedCard: AnkiCardReviewed, contentResolver: ContentResolver): Int {
-    Logger.log("AnkiTasks: updateAnki entered - reviewedCard: ${reviewedCard.noteId}")
+    log("AnkiTasks: updateAnki entered - reviewedCard: ${reviewedCard.noteId}")
     return updateAnkiSchedule(reviewedCard, contentResolver)
 }
 
 suspend fun queryAnkiSchedule(deckId: Long, limit: Int, contentResolver: ContentResolver): List<AnkiCardForReview> {
-    Logger.log("AnkiTasks: QueryAnkiSchedule: doInBackground entered")
+    log("AnkiTasks: QueryAnkiSchedule: doInBackground entered")
 
     val reviewInfos = mutableListOf<AnkiCardForReview>()
 
@@ -125,7 +126,7 @@ suspend fun queryAnkiSimpleCards(reviewInfo: List<AnkiCardForReview>, contentRes
 }
 
 suspend fun queryAnkiSpecificSimpleCards(reviewInfo: List<AnkiCardForReview>, contentResolver: ContentResolver): List<AnkiCard> {
-    Logger.log("AnkiTasks: suspend queryAnkiSpecificSimpleCards entered")
+    log("AnkiTasks: suspend queryAnkiSpecificSimpleCards entered")
 
     var noteUri: Uri
     var cardsUri: Uri
@@ -171,7 +172,7 @@ suspend fun queryAnkiSpecificSimpleCards(reviewInfo: List<AnkiCardForReview>, co
 }
 
 suspend fun queryAnkiModels(cards: List<AnkiCard>, contentResolver: ContentResolver): List<AnkiCard> {
-    Logger.log("AnkiTasks: suspend queryAnkiModels entered")
+    log("AnkiTasks: suspend queryAnkiModels entered")
 
     var noteUri: Uri
     val projection = arrayOf(FlashCardsContract.Note.MID)

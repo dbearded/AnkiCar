@@ -48,10 +48,10 @@ interface ModelCleanser {
 
 }
 
-fun AnkiCard.getCleanser() = when {
-    (modelId == ClozeStatementCleanser.MODEL_ID) -> ClozeStatementCleanser
-    (modelId == ClozeOverlappingCleanser.MODEL_ID) -> ClozeOverlappingCleanser
-    (modelId == ProblemCleanser.MODEL_ID) -> ProblemCleanser
+fun AnkiCard.getCleanser() = when(modelId) {
+    ClozeStatementCleanser.MODEL_ID -> ClozeStatementCleanser
+    ClozeOverlappingCleanser.MODEL_ID -> ClozeOverlappingCleanser
+    ProblemCleanser.MODEL_ID -> ProblemCleanser
     else -> {
         object : ModelCleanser {
             override fun cleanse(ankiCard: AnkiCard): QAPair {
