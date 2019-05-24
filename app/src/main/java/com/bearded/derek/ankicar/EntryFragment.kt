@@ -12,6 +12,7 @@ import com.bearded.derek.ankicar.data.VerticalSpaceItemDecorator
 import com.bearded.derek.ankicar.model.AnkiDatabase
 import com.bearded.derek.ankicar.model.CardDao
 
+// silly comment
 /**
  * A placeholder fragment containing a simple view.
  */
